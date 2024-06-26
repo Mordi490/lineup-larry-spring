@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS
+    users (
+        id bigserial not null,
+        username text,
+        primary key (id)
+    );
+
+CREATE TABLE IF NOT EXISTS
+    lineup (
+        id bigserial not null,
+        user_id bigserial REFERENCES users (id) not null,
+        title text,
+        body text,
+        primary key (id)
+    );
+
+-- start the sequence for dummy data
+-- ALTER SEQUENCE user_preferences_id_seq RESTART WITH 101;
