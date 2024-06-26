@@ -34,7 +34,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(User user) {
+    public User createUser(@RequestBody User user) {
         System.out.println("Received user (controller): " + user);
         return repository.createUser(user);
     }
