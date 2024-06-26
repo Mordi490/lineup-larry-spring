@@ -1,10 +1,13 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
-import java.util.List;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.LINEUP;
+import static org.jooq.Records.mapping;
 
 
 @Repository
@@ -18,8 +21,8 @@ public class LineupRepository {
 
     public List<Lineup> findAllLineups() {
         return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
-        .from(LINEUP)
-        .fetch(r -> new Lineup(r.get(LINEUP.ID), r.get(LINEUP.TITLE), r.get(LINEUP.BODY), r.get(LINEUP.USER_ID)));
+                .from(LINEUP)
+                .fetch(r -> new Lineup(r.get(LINEUP.ID), r.get(LINEUP.TITLE), r.get(LINEUP.BODY), r.get(LINEUP.USER_ID)));
     }
 
     public Lineup createLineup(Lineup lineup) {
@@ -32,21 +35,30 @@ public class LineupRepository {
                 .fetchOne(record -> new Lineup(record.getId(), record.getTitle(), record.getBody(), record.getUserId()));
     }
 
-    public Lineup getLineupById(Long id) {
-        return new Lineup(1L, "faux lineup", "faux lineup", id);
+    public Optional<Lineup> getLineupById(Long id) {
+        return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.ID.eq(id))
+                .fetchOptional().map(mapping(Lineup::create));
     }
 
-    public Lineup updateLineup(Long id, Lineup lineup) {
-        return new Lineup(1L, lineup.title(), lineup.body(), id);
+    public void updateLineup(Lineup lineup) {
+        dsl.fetchOptional(LINEUP, LINEUP.ID.eq(lineup.id()))
+                .ifPresent(r -> {
+                    r.setId(lineup.id());
+                    r.setTitle(lineup.title());
+                    r.setBody(lineup.body()); // I assume that userId is never going to change
+                    r.store();
+                });
     }
 
-    public Lineup deleteLineup(Long id) {
-        return new Lineup(1L, "hehe delete", "hehe delete", id);
+    public void deleteLineup(Long id) {
+        dsl.deleteFrom(LINEUP).where(LINEUP.ID.eq(id)).execute();
     }
 
     // fetches all the lineups from a given user
     public List<Lineup> getLineupsByUserId(Long id) {
-        return dsl.select(LINEUP.ID,LINEUP.TITLE,LINEUP.BODY,LINEUP.USER_ID)
+        return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.USER_ID.eq(id))
                 .fetch(r -> new Lineup(r.get(LINEUP.ID), r.get(LINEUP.TITLE), r.get(LINEUP.BODY), r.get(LINEUP.USER_ID)));

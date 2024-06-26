@@ -1,10 +1,11 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
-import java.util.List;
-import java.util.Optional;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.USERS;
 import static org.jooq.Records.mapping;
@@ -24,7 +25,10 @@ public class UserRepository {
     }
 
     public Optional<User> getUserById(Long id) {
-        return dsl.select(USERS.ID, USERS.USERNAME).from(USERS).where(USERS.ID.eq(id)).fetchOptional().map(mapping(User::create));
+        return dsl.select(USERS.ID, USERS.USERNAME)
+                .from(USERS)
+                .where(USERS.ID.eq(id))
+                .fetchOptional().map(mapping(User::create));
     }
 
     // consider using "UserRecord" instead

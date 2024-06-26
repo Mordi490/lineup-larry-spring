@@ -1,10 +1,8 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
-import jakarta.validation.Valid;
-import org.jooq.DSLContext;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,9 +34,9 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void createUser(User user) {
+    public User createUser(User user) {
         System.out.println("Received user (controller): " + user);
-        repository.createUser(user);
+        return repository.createUser(user);
     }
 
     @PutMapping("/{id}")
@@ -47,6 +45,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
         repository.deleteUser(id);
     }

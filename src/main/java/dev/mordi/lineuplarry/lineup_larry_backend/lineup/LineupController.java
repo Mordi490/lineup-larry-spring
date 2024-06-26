@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -30,7 +31,7 @@ public class LineupController {
     }
 
     @GetMapping("/{id}")
-    public Lineup getById(@PathVariable Long id) {
+    public Optional<Lineup> getById(@PathVariable Long id) {
         return repository.getLineupById(id);
     }
 
@@ -42,13 +43,14 @@ public class LineupController {
     }
 
     @PutMapping("/{id}")
-    public Lineup updateLineup(@PathVariable Long id, @RequestBody Lineup lineup) {
-        return repository.updateLineup(id, lineup);
+    public void updateLineup(@RequestBody Lineup lineup) {
+        repository.updateLineup(lineup);
     }
 
     @DeleteMapping("/{id}")
-    public Lineup deleteLineup(@PathVariable Long id) {
-        return repository.deleteLineup(id);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLineup(@PathVariable Long id) {
+        repository.deleteLineup(id);
     }
 
     @GetMapping("/user/{id}")
