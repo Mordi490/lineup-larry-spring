@@ -39,9 +39,10 @@ public class UserController {
         return repository.createUser(user);
     }
 
+    // TODO: verify that this is the correct way to go about this after adding security
     @PutMapping("/{id}")
     public void updateUser(@PathVariable Long id, User user) {
-        repository.updateUser(user);
+        repository.updateUser(id, user);
     }
 
     @DeleteMapping("/{id}")

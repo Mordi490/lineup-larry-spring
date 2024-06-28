@@ -1,16 +1,16 @@
 CREATE TABLE IF NOT EXISTS
     users (
         id bigserial not null,
-        username text,
+        username text not null,
         primary key (id)
     );
 
 CREATE TABLE IF NOT EXISTS
     lineup (
         id bigserial not null,
-        user_id bigserial REFERENCES users (id) not null,
         title text,
         body text,
+        user_id bigserial REFERENCES users (id) not null,
         primary key (id)
     );
 

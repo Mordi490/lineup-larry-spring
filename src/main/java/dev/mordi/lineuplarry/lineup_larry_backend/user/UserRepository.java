@@ -1,5 +1,8 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.IdDoesNotMatchUserException;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUsernameException;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.UserNotFoundException;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -31,9 +34,38 @@ public class UserRepository {
                 .fetchOptional().map(mapping(User::create));
     }
 
+    // TODO: move this to utils or something similar
+    private void validateUsername(String username) {
+        if (username == null) {
+            throw new InvalidUsernameException.NullUsernameException();
+        }
+        if (username.isEmpty()) {
+            throw new InvalidUsernameException.EmptyUsernameException();
+        }
+        if (username.isBlank()) {
+            throw new InvalidUsernameException.BlankUsernameException();
+        }
+    }
+
+    private void validateUpdateUser(Long id, User user) {
+        if (!id.equals(user.id())) {
+            throw new IdDoesNotMatchUserException(id, user);
+        }
+        if (user.username() == null) {
+            throw new InvalidUsernameException.NullUsernameException();
+        }
+        if (user.username().isEmpty()) {
+            throw new InvalidUsernameException.EmptyUsernameException();
+        }
+        if (user.username().isBlank()) {
+            throw new InvalidUsernameException.BlankUsernameException();
+        }
+    }
+
     // consider using "UserRecord" instead
     public User createUser(User user) {
-        System.out.println("Received user (userRepo): " + user);
+        validateUsername(user.username());
+
         return dsl.insertInto(USERS)
                 .set(USERS.USERNAME, user.username())
                 .returning()
@@ -43,7 +75,10 @@ public class UserRepository {
                 ));
     }
 
-    public void updateUser(User user) {
+    public void updateUser(Long id, User user) {
+        // validate that the id and username has not changed
+        validateUpdateUser(id, user);
+
         dsl.fetchOptional(USERS, USERS.ID.eq(user.id()))
                 .ifPresent(r -> {
                     r.setUsername(user.username());
@@ -51,8 +86,15 @@ public class UserRepository {
                 });
     }
 
-
     public void deleteUser(Long id) {
+        boolean exists = dsl.fetchExists(
+                dsl.selectOne().from(USERS).where(USERS.ID.eq(id))
+        );
+
+        if (!exists) {
+            throw new UserNotFoundException(id);
+        }
+
         dsl.deleteFrom(USERS).where(USERS.ID.eq(id)).execute();
     }
 }
