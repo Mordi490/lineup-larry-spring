@@ -1,9 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
 
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.IdDoesNotMatchUserException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUsernameException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.UserNotFoundException;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
@@ -66,11 +64,10 @@ public class UserRepositoryTest {
         assertThat(savedUser.id()).isEqualTo(101L);
     }
 
-    // TODO: Set SQL constraints so we get validation
     @Test
     void rejectNullValuesUserCreation() {
         User user = new User(null, null);
-        assertThrows(InvalidUsernameException.NullUsernameException.class, () -> {
+        assertThrows(InvalidUserException.NullUsernameException.class, () -> {
             userRepository.createUser(user);
         });
     }
@@ -79,7 +76,7 @@ public class UserRepositoryTest {
     void rejectEmptyStringUserCreation() {
         User user = new User(null, "");
         // Assert that createUser throws an EmptyUsernameException
-        assertThrows(InvalidUsernameException.EmptyUsernameException.class, () -> {
+        assertThrows(InvalidUserException.BlankUsernameException.class, () -> {
             userRepository.createUser(user);
         });
     }
@@ -102,11 +99,9 @@ public class UserRepositoryTest {
             throw new Exception("failed to fetch existing user");
         }
     }
-    // TODO: negative test cases for update?
 
     @Test
     void failUpdateIfIdIsChanged() throws Exception {
-        // TODO
         Optional<User> userToUpdate = userRepository.getUserById(2L);
 
         if (userToUpdate.isEmpty()) {
@@ -115,7 +110,7 @@ public class UserRepositoryTest {
 
         User userWithChangedId = new User(3L, userToUpdate.get().username());
 
-        assertThrows(IdDoesNotMatchUserException.class, () -> {
+        assertThrows(InvalidUserException.IdDoesNotMatchUserException.class, () -> {
             userRepository.updateUser(2L, userWithChangedId);
         });
     }
@@ -130,7 +125,7 @@ public class UserRepositoryTest {
 
         User userWithNullName = new User(2L, null);
 
-        assertThrows(InvalidUsernameException.NullUsernameException.class, () -> {
+        assertThrows(InvalidUserException.NullUsernameException.class, () -> {
             userRepository.updateUser(2L, userWithNullName);
         });
     }
@@ -145,7 +140,7 @@ public class UserRepositoryTest {
 
         User userWithBlankName = new User(2L, " ");
 
-        assertThrows(InvalidUsernameException.BlankUsernameException.class, () -> {
+        assertThrows(InvalidUserException.BlankUsernameException.class, () -> {
             userRepository.updateUser(2L, userWithBlankName);
         });
     }
@@ -163,7 +158,7 @@ public class UserRepositoryTest {
 
     @Test
     void failDeleteForNonExistingUser() {
-        assertThrows(UserNotFoundException.class, () -> {
+        assertThrows(InvalidUserException.UserNotFoundException.class, () -> {
             userRepository.deleteUser(22L);
         });
     }

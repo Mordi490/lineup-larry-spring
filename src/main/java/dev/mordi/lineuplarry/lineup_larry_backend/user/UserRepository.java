@@ -1,8 +1,6 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.IdDoesNotMatchUserException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUsernameException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.UserNotFoundException;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -37,28 +35,22 @@ public class UserRepository {
     // TODO: move this to utils or something similar
     private void validateUsername(String username) {
         if (username == null) {
-            throw new InvalidUsernameException.NullUsernameException();
-        }
-        if (username.isEmpty()) {
-            throw new InvalidUsernameException.EmptyUsernameException();
+            throw new InvalidUserException.NullUsernameException();
         }
         if (username.isBlank()) {
-            throw new InvalidUsernameException.BlankUsernameException();
+            throw new InvalidUserException.BlankUsernameException();
         }
     }
 
     private void validateUpdateUser(Long id, User user) {
         if (!id.equals(user.id())) {
-            throw new IdDoesNotMatchUserException(id, user);
+            throw new InvalidUserException.IdDoesNotMatchUserException(id, user);
         }
         if (user.username() == null) {
-            throw new InvalidUsernameException.NullUsernameException();
-        }
-        if (user.username().isEmpty()) {
-            throw new InvalidUsernameException.EmptyUsernameException();
+            throw new InvalidUserException.NullUsernameException();
         }
         if (user.username().isBlank()) {
-            throw new InvalidUsernameException.BlankUsernameException();
+            throw new InvalidUserException.BlankUsernameException();
         }
     }
 
@@ -92,7 +84,7 @@ public class UserRepository {
         );
 
         if (!exists) {
-            throw new UserNotFoundException(id);
+            throw new InvalidUserException.UserNotFoundException(id);
         }
 
         dsl.deleteFrom(USERS).where(USERS.ID.eq(id)).execute();
