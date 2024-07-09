@@ -43,6 +43,7 @@ public class UserRepositoryTest {
     @Test
     void successfulGetById() {
         Optional<User> possibleUser = userRepository.getUserById(1L);
+
         assertThat(possibleUser.get().username()).isEqualTo("userOne");
         assertThat(possibleUser.get().id()).isEqualTo(1L);
     }
@@ -50,7 +51,7 @@ public class UserRepositoryTest {
     @Test
     void negativeGetById() {
         Optional<User> shouldNotExist = userRepository.getUserById(22L);
-        assertThat(shouldNotExist.isEmpty());
+        assertThat(shouldNotExist).isEmpty();
     }
 
     @Test
