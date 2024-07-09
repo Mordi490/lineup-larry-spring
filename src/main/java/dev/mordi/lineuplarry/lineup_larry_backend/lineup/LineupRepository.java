@@ -1,5 +1,6 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
@@ -26,13 +27,69 @@ public class LineupRepository {
     }
 
     public Lineup createLineup(Lineup lineup) {
-        System.out.println("Received lineup (repo):" + lineup);
+        createValidation(lineup.title(), lineup.body(), lineup.userId());
+
         return dsl.insertInto(LINEUP)
                 .set(LINEUP.TITLE, lineup.title())
                 .set(LINEUP.BODY, lineup.body())
                 .set(LINEUP.USER_ID, lineup.userId())
                 .returning()
                 .fetchOne(record -> new Lineup(record.getId(), record.getTitle(), record.getBody(), record.getUserId()));
+    }
+
+    private void createValidation(String title, String body, Long userId) {
+        if (title == null) {
+            throw new InvalidLineupException.NullTitleException();
+        }
+        if (body == null) {
+            throw new InvalidLineupException.NullBodyException();
+        }
+        if (userId == null) {
+            throw new InvalidLineupException.UserIdNullException();
+        }
+        if (title.isEmpty()) {
+            throw new InvalidLineupException.EmptyTitleException();
+        }
+        if (body.isEmpty()) {
+            throw new InvalidLineupException.EmptyBodyException();
+        }
+        if (title.isBlank()) {
+            throw new InvalidLineupException.BlankTitleException();
+        }
+        if (body.isBlank()) {
+            throw new InvalidLineupException.BlankBodyException();
+        }
+    }
+
+    // TODO: this is very confusing, please user better names
+    private void updateValidation(Long lineupId, String title, String body, Long userId) {
+        if (title == null) {
+            throw new InvalidLineupException.NullTitleException();
+        }
+        if (body == null) {
+            throw new InvalidLineupException.NullBodyException();
+        }
+        if (userId == null) {
+            throw new InvalidLineupException.UserIdNullException();
+        }
+        if (lineupId == null) {
+            throw new InvalidLineupException.NullLineupIdException();
+        }
+        if (title.isEmpty()) {
+            throw new InvalidLineupException.EmptyTitleException();
+        }
+        if (body.isEmpty()) {
+            throw new InvalidLineupException.EmptyBodyException();
+        }
+        if (title.isBlank()) {
+            throw new InvalidLineupException.BlankTitleException();
+        }
+        if (body.isBlank()) {
+            throw new InvalidLineupException.BlankBodyException();
+        }
+        if (!lineupId.equals(userId)) {
+            throw new InvalidLineupException.UserIdInvalidException();
+        }
     }
 
     public Optional<Lineup> getLineupById(Long id) {
@@ -43,6 +100,8 @@ public class LineupRepository {
     }
 
     public void updateLineup(Lineup lineup) {
+        updateValidation(lineup.id(), lineup.title(), lineup.body(), lineup.userId());
+
         dsl.fetchOptional(LINEUP, LINEUP.ID.eq(lineup.id()))
                 .ifPresent(r -> {
                     r.setId(lineup.id());
@@ -53,8 +112,12 @@ public class LineupRepository {
     }
 
     public void deleteLineup(Long id) {
+        if (id == null) {
+            throw new InvalidLineupException.NullLineupIdException();
+        }
         dsl.deleteFrom(LINEUP).where(LINEUP.ID.eq(id)).execute();
     }
+    // consider adding batch delete
 
     // fetches all the lineups from a given user
     public List<Lineup> getLineupsByUserId(Long id) {

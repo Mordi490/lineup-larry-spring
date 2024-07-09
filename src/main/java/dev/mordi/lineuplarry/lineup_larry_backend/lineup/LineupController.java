@@ -38,7 +38,6 @@ public class LineupController {
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public Lineup createLineup(@RequestBody Lineup lineup) {
-        System.out.println("Received lineup (controller):" + lineup);
         return repository.createLineup(lineup);
     }
 
