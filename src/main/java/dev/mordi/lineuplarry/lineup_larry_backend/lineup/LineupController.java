@@ -1,6 +1,5 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
-import org.jooq.DSLContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,11 +11,9 @@ import java.util.Optional;
 @RequestMapping("/api/lineups")
 public class LineupController {
 
-    DSLContext dsl;
     LineupRepository repository;
 
-    LineupController(DSLContext dsl, LineupRepository repository) {
-        this.dsl = dsl;
+    LineupController(LineupRepository repository) {
         this.repository = repository;
     }
 
