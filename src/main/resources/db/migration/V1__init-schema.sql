@@ -13,3 +13,4 @@ CREATE TABLE IF NOT EXISTS
         user_id bigserial REFERENCES users (id) not null,
         primary key (id)
     );
+

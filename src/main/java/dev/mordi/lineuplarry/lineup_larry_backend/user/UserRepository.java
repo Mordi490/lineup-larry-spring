@@ -26,38 +26,21 @@ public class UserRepository {
     }
 
     public Optional<User> getUserById(Long id) {
-        return dsl.select(USERS.ID, USERS.USERNAME)
+        Optional<User> res = dsl.select(USERS.ID, USERS.USERNAME)
                 .from(USERS)
                 .where(USERS.ID.eq(id))
                 .fetchOptional().map(mapping(User::create));
-    }
 
-    // TODO: move this to utils or something similar
-    private void validateUsername(String username) {
-        if (username == null) {
-            throw new InvalidUserException.NullUsernameException();
+        /*
+        if (res.isEmpty()) {
+            throw new InvalidLineupException.NoUserException(id);
         }
-        if (username.isBlank()) {
-            throw new InvalidUserException.BlankUsernameException();
-        }
-    }
-
-    private void validateUpdateUser(Long id, User user) {
-        if (!id.equals(user.id())) {
-            throw new InvalidUserException.IdDoesNotMatchUserException(id, user);
-        }
-        if (user.username() == null) {
-            throw new InvalidUserException.NullUsernameException();
-        }
-        if (user.username().isBlank()) {
-            throw new InvalidUserException.BlankUsernameException();
-        }
+         */
+        return res;
     }
 
     // consider using "UserRecord" instead
     public User createUser(User user) {
-        validateUsername(user.username());
-
         return dsl.insertInto(USERS)
                 .set(USERS.USERNAME, user.username())
                 .returning()
@@ -68,9 +51,6 @@ public class UserRepository {
     }
 
     public void updateUser(Long id, User user) {
-        // validate that the id and username has not changed
-        validateUpdateUser(id, user);
-
         dsl.fetchOptional(USERS, USERS.ID.eq(user.id()))
                 .ifPresent(r -> {
                     r.setUsername(user.username());
@@ -78,6 +58,7 @@ public class UserRepository {
                 });
     }
 
+    // TODO: rethink if we really need two queries here
     public void deleteUser(Long id) {
         boolean exists = dsl.fetchExists(
                 dsl.selectOne().from(USERS).where(USERS.ID.eq(id))

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.LINEUP;
+import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.USERS;
 import static org.jooq.Records.mapping;
 
 
@@ -27,81 +28,41 @@ public class LineupRepository {
     }
 
     public Lineup createLineup(Lineup lineup) {
-        createValidation(lineup.title(), lineup.body(), lineup.userId());
+        if (doesUserExist(lineup.userId(), true)) {
+            return dsl.insertInto(LINEUP)
+                    .set(LINEUP.TITLE, lineup.title())
+                    .set(LINEUP.BODY, lineup.body())
+                    .set(LINEUP.USER_ID, lineup.userId())
+                    .returning()
+                    .fetchOne(record -> new Lineup(record.getId(), record.getTitle(), record.getBody(), record.getUserId()));
+        } else {
+            throw new RuntimeException("Failed to create lineup");
+        }
 
-        return dsl.insertInto(LINEUP)
-                .set(LINEUP.TITLE, lineup.title())
-                .set(LINEUP.BODY, lineup.body())
-                .set(LINEUP.USER_ID, lineup.userId())
-                .returning()
-                .fetchOne(record -> new Lineup(record.getId(), record.getTitle(), record.getBody(), record.getUserId()));
     }
 
-    private void createValidation(String title, String body, Long userId) {
-        if (title == null) {
-            throw new InvalidLineupException.NullTitleException();
+    private boolean doesUserExist(Long userId, boolean isCreate) {
+        boolean exists = dsl.fetchExists(
+                dsl.selectOne().from(USERS).where(USERS.ID.eq(userId))
+        );
+        if (!exists && !isCreate) {
+            throw new InvalidLineupException.NoUserException(userId);
         }
-        if (body == null) {
-            throw new InvalidLineupException.NullBodyException();
+        if (!exists) {
+            throw new InvalidLineupException.UserIdInvalidException(userId);
         }
-        if (userId == null) {
-            throw new InvalidLineupException.UserIdNullException();
-        }
-        if (title.isEmpty()) {
-            throw new InvalidLineupException.EmptyTitleException();
-        }
-        if (body.isEmpty()) {
-            throw new InvalidLineupException.EmptyBodyException();
-        }
-        if (title.isBlank()) {
-            throw new InvalidLineupException.BlankTitleException();
-        }
-        if (body.isBlank()) {
-            throw new InvalidLineupException.BlankBodyException();
-        }
-    }
-
-    // TODO: this is very confusing, please user better names
-    private void updateValidation(Long lineupId, String title, String body, Long userId) {
-        if (title == null) {
-            throw new InvalidLineupException.NullTitleException();
-        }
-        if (body == null) {
-            throw new InvalidLineupException.NullBodyException();
-        }
-        if (userId == null) {
-            throw new InvalidLineupException.UserIdNullException();
-        }
-        if (lineupId == null) {
-            throw new InvalidLineupException.NullLineupIdException();
-        }
-        if (title.isEmpty()) {
-            throw new InvalidLineupException.EmptyTitleException();
-        }
-        if (body.isEmpty()) {
-            throw new InvalidLineupException.EmptyBodyException();
-        }
-        if (title.isBlank()) {
-            throw new InvalidLineupException.BlankTitleException();
-        }
-        if (body.isBlank()) {
-            throw new InvalidLineupException.BlankBodyException();
-        }
-        if (!lineupId.equals(userId)) {
-            throw new InvalidLineupException.UserIdInvalidException();
-        }
+        return true;
     }
 
     public Optional<Lineup> getLineupById(Long id) {
         return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.ID.eq(id))
-                .fetchOptional().map(mapping(Lineup::create));
+                .fetchOptional()
+                .map(mapping(Lineup::create));
     }
 
     public void updateLineup(Lineup lineup) {
-        updateValidation(lineup.id(), lineup.title(), lineup.body(), lineup.userId());
-
         dsl.fetchOptional(LINEUP, LINEUP.ID.eq(lineup.id()))
                 .ifPresent(r -> {
                     r.setId(lineup.id());
@@ -112,18 +73,33 @@ public class LineupRepository {
     }
 
     public void deleteLineup(Long id) {
-        if (id == null) {
-            throw new InvalidLineupException.NullLineupIdException();
-        }
         dsl.deleteFrom(LINEUP).where(LINEUP.ID.eq(id)).execute();
     }
-    // consider adding batch delete
 
     // fetches all the lineups from a given user
-    public List<Lineup> getLineupsByUserId(Long id) {
-        return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+    public Optional<List<Lineup>> getLineupsByUserId(Long id) {
+        boolean exists = doesUserExist(id, false);
+
+        if (!exists) {
+            throw new InvalidLineupException.NoUserException(id);
+        }
+
+        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.USER_ID.eq(id))
-                .fetch(r -> new Lineup(r.get(LINEUP.ID), r.get(LINEUP.TITLE), r.get(LINEUP.BODY), r.get(LINEUP.USER_ID)));
+                .fetch()
+                .map(mapping(Lineup::create));
+
+        return Optional.of(lineups);
+    }
+
+    public Optional<List<Lineup>> getByTitle(String name) {
+        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.TITLE.eq(name))
+                .fetch()
+                .map(mapping(Lineup::create));
+
+        return lineups.isEmpty() ? Optional.empty() : Optional.of(lineups);
     }
 }

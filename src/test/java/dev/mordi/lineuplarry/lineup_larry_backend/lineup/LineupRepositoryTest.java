@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -17,7 +16,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 
 @JooqTest
 @Import({LineupRepository.class})
@@ -34,10 +32,16 @@ public class LineupRepositoryTest {
     @Autowired
     LineupRepository lineupRepository;
 
+    // getAll
     @Test
-    void dbHasBeenPopulated() {
+    void getAllLineups() {
         List<Lineup> allLineups = lineupRepository.findAllLineups();
-        assertThat(allLineups.size()).isEqualTo(4);
+
+        assertThat(allLineups.size()).isEqualTo(6);
+        assertThat(allLineups.getFirst().id()).isEqualTo(1L);
+        assertThat(allLineups.getFirst().title()).isEqualTo("lineupOne");
+        assertThat(allLineups.getFirst().body()).isEqualTo("bodyOne");
+        assertThat(allLineups.getFirst().userId()).isEqualTo(1L);
     }
 
     // Get by ID
@@ -59,7 +63,7 @@ public class LineupRepositoryTest {
     void failToFetchNonExistentLineup() {
         Optional<Lineup> lineup = lineupRepository.getLineupById(44L);
 
-        assertThat(lineup.isEmpty());
+        assertThat(lineup).isEmpty();
     }
 
     // Create
@@ -75,63 +79,18 @@ public class LineupRepositoryTest {
         assertThat(res.userId()).isEqualTo(newLineup.userId());
     }
 
-    // fail creation with empty and/or blank title and/or body
     @Test
-    void failCreationForBlankTitle() {
-        Lineup lineupWithBlankTitle = new Lineup(null, "  ", "not blank body", 2L);
+    void failCreateDueToUsingNonexistentUserId() {
+        Lineup lineupWithNonexistentUserId = new Lineup(null, "valid title", "valid body", 999L);
 
-        assertThrows(InvalidLineupException.BlankTitleException.class, () -> {
-            lineupRepository.createLineup(lineupWithBlankTitle);
-        });
-    }
-
-    @Test
-    void failCreationForBlankBody() {
-        Lineup lineupWithBlankBody = new Lineup(null, "valid title", "   ", 2L);
-
-        assertThrows(InvalidLineupException.BlankBodyException.class, () -> {
-            lineupRepository.createLineup(lineupWithBlankBody);
-        });
-    }
-
-    @Test
-    void failCreationForNullTitle() {
-        Lineup lineupWithNullTitle = new Lineup(null, null, "valid body", 2L);
-
-        assertThrows(InvalidLineupException.NullTitleException.class, () -> {
-            lineupRepository.createLineup(lineupWithNullTitle);
-        });
-    }
-
-    @Test
-    void failCreationForNullBody() {
-        Lineup lineupWithNullBody = new Lineup(null, "valid title", null, 2L);
-
-        assertThrows(InvalidLineupException.NullBodyException.class, () -> {
-            lineupRepository.createLineup(lineupWithNullBody);
-        });
-    }
-
-    // fail creation with a "null" as userId
-    @Test
-    void failCreationForNullUserId() {
-        Lineup lineupWitNullUserId = new Lineup(null, "valid title", "valid body", null);
-
-        assertThrows(InvalidLineupException.UserIdNullException.class, () -> {
-            lineupRepository.createLineup(lineupWitNullUserId);
+        // should be something like this
+        assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
+            lineupRepository.createLineup(lineupWithNonexistentUserId);
         });
     }
 
     // TODO: revisit this once security has been
-    @Test
-    void failCreationForMismatchedUserId() {
-        Lineup lineupWitNullUserId = new Lineup(242L, "valid title", "valid body", 250L);
-
-        assertThrows(DataIntegrityViolationException.class, () -> {
-            lineupRepository.createLineup(lineupWitNullUserId);
-        });
-    }
-
+    // ie. fail because the user's provided principal does not match with the set userId
     // Update
     // success
     @Test
@@ -161,160 +120,7 @@ public class LineupRepositoryTest {
         assertThat(updatedLineup.get().userId()).isEqualTo(1L);
     }
 
-    // helper method since we always use lineup 1L and do the same assertions
-    // ??? code it here bud
-
-    // fail
-    // reasonable errors on bad data
-    @Test
-    void failUpdateWithBlankTitle() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithBlankTitle = lineupToFetch.get().withTitle("  ");
-        assertThrows(InvalidLineupException.BlankTitleException.class, () -> {
-            lineupRepository.updateLineup(lineupWithBlankTitle);
-        });
-    }
-
-    @Test
-    void failUpdateWithBlankBody() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithBlankBody = lineupToFetch.get().withBody("  ");
-        assertThrows(InvalidLineupException.BlankBodyException.class, () -> {
-            lineupRepository.updateLineup(lineupWithBlankBody);
-        });
-    }
-
-    @Test
-    void failUpdateWithEmptyTitle() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithEmptyTitle = lineupToFetch.get().withTitle("");
-        assertThrows(InvalidLineupException.EmptyTitleException.class, () -> {
-            lineupRepository.updateLineup(lineupWithEmptyTitle);
-        });
-    }
-
-    @Test
-    void failUpdateWithEmptyBody() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithEmptyBody = lineupToFetch.get().withBody("");
-        assertThrows(InvalidLineupException.EmptyBodyException.class, () -> {
-            lineupRepository.updateLineup(lineupWithEmptyBody);
-        });
-    }
-
-    @Test
-    void failUpdateWithNullTitle() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithNullTitle = lineupToFetch.get().withTitle(null);
-        assertThrows(InvalidLineupException.NullTitleException.class, () -> {
-            lineupRepository.updateLineup(lineupWithNullTitle);
-        });
-    }
-
-    @Test
-    void failUpdateWithNullBody() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithNullBody = lineupToFetch.get().withBody(null);
-        assertThrows(InvalidLineupException.NullBodyException.class, () -> {
-            lineupRepository.updateLineup(lineupWithNullBody);
-        });
-    }
-
-    // TODO: update this when security has been added
-    @Test
-    void failUpdateWithMismatchedUserId() {
-        /*
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithMismatchedUserId = lineupToFetch.get().withUserId(2L);
-        assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
-            lineupRepository.updateLineup(lineupWithMismatchedUserId);
-        });
-         */
-    }
-
-    @Test
-    void failUpdateWithNullId() {
-        Optional<Lineup> lineupToFetch = lineupRepository.getLineupById(1L);
-
-        if (lineupToFetch.isEmpty()) {
-            throw new RuntimeException("Failed to fetch lineup with Id 1");
-        }
-        assertThat(lineupToFetch.get().title()).isEqualTo("lineupOne");
-        assertThat(lineupToFetch.get().body()).isEqualTo("bodyOne");
-        assertThat(lineupToFetch.get().id()).isEqualTo(1L);
-        assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
-
-        Lineup lineupWithNullId = lineupToFetch.get().withId(null);
-        assertThrows(InvalidLineupException.NullLineupIdException.class, () -> {
-            lineupRepository.updateLineup(lineupWithNullId);
-        });
-    }
-
     // delete
-    // success cases
     // TODO: revisit this when security has been added
     @Test
     void successfulDelete() {
@@ -339,7 +145,7 @@ public class LineupRepositoryTest {
 
     // deletions on ids, that doesn't have a lineup assigned does noting, and returns nothing
     @Test
-    void failSilentlyOnLineupsThatDoNotExist() {
+    void deleteNonExistentLineup() {
         // check for empty lineup
         Optional<Lineup> nonExistentLineup = lineupRepository.getLineupById(42L);
 
@@ -348,39 +154,48 @@ public class LineupRepositoryTest {
         lineupRepository.deleteLineup(42L);
     }
 
-    // failure cases
-    // fail to delete on bad data, null, empty strings, etc
-    @Test
-    void failDeleteForNull() {
-        assertThrows(InvalidLineupException.NullLineupIdException.class, () -> {
-            lineupRepository.deleteLineup(null);
-        });
-    }
-
     // get all from user
     @Test
     void successfulGetAllLineupsFromUser() {
-        // confirm that the user has lineups
-        List<Lineup> lineupsFromUser = lineupRepository.getLineupsByUserId(2L);
+        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(2L);
 
-        assertThat(lineupsFromUser.size()).isEqualTo(2);
-        assertThat(lineupsFromUser.getFirst().title()).isEqualTo("lineupTwo");
-        assertThat(lineupsFromUser.getLast().title()).isEqualTo("lineupThree");
-    }
-
-    @Test
-    void failGetAllLineupsFromANonExistentUser() {
-        List<Lineup> lineupsFromUser = lineupRepository.getLineupsByUserId(42L);
-
-        // make it fail?
-        // consider having it set to zero as to not leak internal info such as what id a user has
-        assertThat(lineupsFromUser.size()).isZero();
+        assertThat(lineupsFromUser).isPresent();
+        assertThat(lineupsFromUser.get().size()).isEqualTo(2);
+        assertThat(lineupsFromUser.get().getFirst().title()).isEqualTo("lineupTwo");
+        assertThat(lineupsFromUser.get().getLast().title()).isEqualTo("lineupThree");
     }
 
     @Test
     void successfulGetAllLineupsFromUserWithZeroLineups() {
-        List<Lineup> lineupsFromUser = lineupRepository.getLineupsByUserId(4L);
+        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(4L);
 
-        assertThat(lineupsFromUser.size()).isZero();
+        assertThat(lineupsFromUser).isPresent();
+        assertThat(lineupsFromUser.get().size()).isZero();
+    }
+
+    @Test
+    void getAllLineupsFromNonexistentUser() {
+        // expects null which then gets translated into not found?
+        Long nonexistentUserId = 55L;
+        assertThrows(InvalidLineupException.NoUserException.class, () -> {
+            lineupRepository.getLineupsByUserId(nonexistentUserId);
+        });
+    }
+
+    // testing "getByTitle", lineupId: 4 & 5 share the same title, 'same name'.
+    @Test
+    void successfulGetByTitle() {
+        Optional<List<Lineup>> lineups = lineupRepository.getByTitle("same name");
+
+        assertThat(lineups).isPresent();
+        assertThat(lineups.get().size()).isEqualTo(2);
+    }
+
+    // return for zero finds
+    @Test
+    void successfulGetByTitleNoMatches() {
+        Optional<List<Lineup>> lineups = lineupRepository.getByTitle("this title will most definitely not result in any lineups being fetched");
+
+        assertThat(lineups).isEmpty();
     }
 }

@@ -1,6 +1,9 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,10 +14,10 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 public class UserController {
 
-    UserRepository repository;
+    private final UserService userService;
 
-    UserController(UserRepository repository) {
-        this.repository = repository;
+    UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("ping")
@@ -24,30 +27,30 @@ public class UserController {
 
     @GetMapping()
     public List<User> getAllUsers() {
-        return repository.getAllUsers();
+        return userService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Optional<User> getUserById(@PathVariable Long id) {
-        return repository.getUserById(id);
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        Optional<User> user = userService.getById(id);
+        return user.map(ResponseEntity::ok)
+                .orElseThrow(() -> new InvalidUserException.UserNotFoundException(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody User user) {
-        System.out.println("Received user (controller): " + user);
-        return repository.createUser(user);
+    public User createUser(@Valid @RequestBody User user) {
+        return userService.createUser(user);
     }
 
-    // TODO: verify that this is the correct way to go about this after adding security
     @PutMapping("/{id}")
-    public void updateUser(@PathVariable Long id, User user) {
-        repository.updateUser(id, user);
+    public void updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
+        userService.updateUser(id, user);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
-        repository.deleteUser(id);
+        userService.deleteUser(id);
     }
 }

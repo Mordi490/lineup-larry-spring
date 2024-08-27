@@ -9,7 +9,7 @@ public class InvalidUserException extends RuntimeException {
 
     public static class IdDoesNotMatchUserException extends InvalidUserException {
         public IdDoesNotMatchUserException(Long id, User user) {
-            super("Id " + id + " does not match user " + user.username() + "current id");
+            super("Id does not match for this user\nExpected " + id + " but got " + user.id());
         }
     }
 
@@ -30,10 +30,22 @@ public class InvalidUserException extends RuntimeException {
             super("Username cannot be empty");
         }
     }
+    
+    public static class MissingCreateDataException extends InvalidUserException {
+        public MissingCreateDataException() {
+            super("Required data to create a user is a username with a string");
+        }
+    }
 
     public static class UserNotFoundException extends InvalidUserException {
         public UserNotFoundException(Long id) {
-            super("User with id " + id + " not found");
+            super("User with id: '" + id + "' was not found");
+        }
+    }
+
+    public static class IncludedUserIdException extends InvalidUserException {
+        public IncludedUserIdException(Long id) {
+            super("Do not supply id when creating a user\nThe id '" + id + "' is invalid");
         }
     }
 }

@@ -41,17 +41,24 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void successfulGetById() {
+    void successfulGetByIdExistingUser() {
         Optional<User> possibleUser = userRepository.getUserById(1L);
 
+        assertThat(possibleUser).isPresent();
         assertThat(possibleUser.get().username()).isEqualTo("userOne");
         assertThat(possibleUser.get().id()).isEqualTo(1L);
     }
 
     @Test
-    void negativeGetById() {
-        Optional<User> shouldNotExist = userRepository.getUserById(22L);
-        assertThat(shouldNotExist).isEmpty();
+    void getByIdOnNonexistentUser() {
+        Optional<User> user = userRepository.getUserById(22L);
+
+        assertThat(user).isEmpty();
+        /*
+        assertThrows(InvalidLineupException.NoUserException.class, () -> {
+            userRepository.getUserById(22L);
+        });
+         */
     }
 
     @Test
@@ -63,23 +70,6 @@ public class UserRepositoryTest {
         assertThat(savedUser).isNotNull();
         assertThat(savedUser.username()).isEqualTo("bob");
         assertThat(savedUser.id()).isEqualTo(101L);
-    }
-
-    @Test
-    void rejectNullValuesUserCreation() {
-        User user = new User(null, null);
-        assertThrows(InvalidUserException.NullUsernameException.class, () -> {
-            userRepository.createUser(user);
-        });
-    }
-
-    @Test
-    void rejectEmptyStringUserCreation() {
-        User user = new User(null, "");
-        // Assert that createUser throws an EmptyUsernameException
-        assertThrows(InvalidUserException.BlankUsernameException.class, () -> {
-            userRepository.createUser(user);
-        });
     }
 
     @Test
@@ -102,61 +92,23 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void failUpdateIfIdIsChanged() throws Exception {
-        Optional<User> userToUpdate = userRepository.getUserById(2L);
-
-        if (userToUpdate.isEmpty()) {
-            throw new Exception("expected user with id 2 to exist");
-        }
-
-        User userWithChangedId = new User(3L, userToUpdate.get().username());
-
-        assertThrows(InvalidUserException.IdDoesNotMatchUserException.class, () -> {
-            userRepository.updateUser(2L, userWithChangedId);
-        });
-    }
-
-    @Test
-    void failIfUpdateUserIfNameIsNull() throws Exception {
-        Optional<User> userToUpdate = userRepository.getUserById(2L);
-
-        if (userToUpdate.isEmpty()) {
-            throw new Exception("expected user with id 2 to exist");
-        }
-
-        User userWithNullName = new User(2L, null);
-
-        assertThrows(InvalidUserException.NullUsernameException.class, () -> {
-            userRepository.updateUser(2L, userWithNullName);
-        });
-    }
-
-    @Test
-    void failIfUpdateUserIfNameIsEmpty() throws Exception {
-        Optional<User> userToUpdate = userRepository.getUserById(2L);
-
-        if (userToUpdate.isEmpty()) {
-            throw new Exception("expected user with id 2 to exist");
-        }
-
-        User userWithBlankName = new User(2L, " ");
-
-        assertThrows(InvalidUserException.BlankUsernameException.class, () -> {
-            userRepository.updateUser(2L, userWithBlankName);
-        });
-    }
-
-    @Test
     void successfulDelete() {
         Optional<User> userToDelete = userRepository.getUserById(4L);
-        assertThat(userToDelete.isPresent()).isTrue();
+        assertThat(userToDelete).isPresent();
 
         userRepository.deleteUser(4L);
 
-        Optional<User> deletedUser = userRepository.getUserById(4L);
-        assertThat(deletedUser.isEmpty()).isTrue();
+        // prev
+        /*
+        assertThrows(InvalidLineupException.NoUserException.class, () -> {
+            userRepository.getUserById(4L);
+        });
+         */
+        Optional<User> reFetchedUser = userRepository.getUserById(4L);
+        assertThat(reFetchedUser).isEmpty();
     }
 
+    // TODO: revisit if this is the most common way to go about this
     @Test
     void failDeleteForNonExistingUser() {
         assertThrows(InvalidUserException.UserNotFoundException.class, () -> {
