@@ -64,25 +64,38 @@ public class UserIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody().isPresent()).isNotNull();
+        assertThat(res.getBody()).isPresent().isNotEmpty();
         assertThat(res.getBody().get()).isEqualTo(new User(1L, "userOne"));
     }
 
     // getNonexistentUser
     @Test
-    void getFromNonexistentId() {
+    void getByIdOnNonexistentId() {
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/users/999",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<>() {
-                }
+                String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.toString()).containsIgnoringCase("User not found");
         assertThat(res.toString()).containsIgnoringCase("User with id: '999' was not found");
+    }
+
+    @Test
+    void faiGetByIdOnString() {
+        var res = restTemplate.exchange(
+                "/api/users/someString",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("Invalid value 'someString' for parameter 'id'. Expected type: 'Long'");
     }
 
     // createUser
@@ -100,7 +113,6 @@ public class UserIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody().id()).isNotNull();
         assertThat(res.getBody().id()).isEqualTo(101);
     }
 
@@ -159,8 +171,6 @@ public class UserIntegrationTest {
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    // TODO: double check problemDetails via curl or http
-    // TODO: write a todo about restTemplate and redirects
     @Test
     void failCreateOnBlankUsername() {
         HttpHeaders headers = new HttpHeaders();
@@ -194,7 +204,6 @@ public class UserIntegrationTest {
         assertThat(res.getBody()).isNull();
     }
 
-    // TODO: double check that we get the correct error messages
     // fail to update user due to null, blank, empty, wrong principal.
     @Test
     void failUpdateOnNullUsername() {
@@ -208,7 +217,7 @@ public class UserIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).contains("username: username cannot be null");
+        assertThat(res.getBody()).contains("username: username cannot be null");
     }
 
     @Test
@@ -223,7 +232,7 @@ public class UserIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).containsIgnoringCase("username cannot be empty");
+        assertThat(res.getBody()).containsIgnoringCase("username cannot be empty");
     }
 
     @Test
@@ -237,13 +246,11 @@ public class UserIntegrationTest {
                 String.class
         );
 
-        System.out.println("update blank res: " + res.toString());
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).containsIgnoringCase("username cannot be blank");
+        assertThat(res.getBody()).containsIgnoringCase("username cannot be blank");
     }
 
-    // TODO: figure out the sql jackass
     // deleteUser
     @Test
     void successfulDeleteAUserWithNoLineups() {
@@ -257,10 +264,73 @@ public class UserIntegrationTest {
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
-    // TODO: test cascading effects of deleting a user
+    // When a user gets deleted, we'll also the delete the lineups the user has created
+    // for reference the userId 2 has two lineups, with id 2 and 3.
     @Test
     void successfulDeleteAUserWithLineups() {
-        // TODO: decide on whether or not we cascade on lineups
+        // confirm that the user does have lineups
+        var userToDeletesLineups = restTemplate.exchange(
+                "/api/lineups/user/2",
+                HttpMethod.GET,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        assertThat(userToDeletesLineups.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(userToDeletesLineups.getBody()).isNotEmpty();
+
+        // delete the user
+        var deleteUserResponse = restTemplate.exchange(
+                "/api/users/2",
+                HttpMethod.DELETE,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        assertThat(deleteUserResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        // confirm that the user has been deleted
+        var requestDeletedUser = restTemplate.exchange(
+                "/api/user/2",
+                HttpMethod.GET,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        assertThat(requestDeletedUser.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        // confirm that the lineups also have been deleted
+        var requestFirstLineup = restTemplate.exchange(
+                "/api/lineups/2",
+                HttpMethod.GET,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        var requestSecondLineup = restTemplate.exchange(
+                "/api/lineups/3",
+                HttpMethod.GET,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        assertThat(requestFirstLineup.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(requestSecondLineup.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void failDeleteOnNonexistentId() {
+        // we'd expect to receive a 404 w/msg "no user associated with id XZY"-esq
+        // for reference, userId: 2 has lineups (ids) 2 and 3.
+        ResponseEntity<String> res = restTemplate.exchange(
+                "/api/users/222",
+                HttpMethod.DELETE,
+                new HttpEntity<>(null),
+                String.class
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("User with id: '222' was not found");
     }
 
     // unsuccessful delete TODO: once auth has been impl

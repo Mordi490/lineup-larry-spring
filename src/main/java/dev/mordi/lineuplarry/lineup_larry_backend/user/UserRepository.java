@@ -29,7 +29,7 @@ public class UserRepository {
         Optional<User> res = dsl.select(USERS.ID, USERS.USERNAME)
                 .from(USERS)
                 .where(USERS.ID.eq(id))
-                .fetchOptional().map(mapping(User::create));
+                .fetchOptional().map(mapping(User::new));
 
         /*
         if (res.isEmpty()) {
@@ -44,10 +44,7 @@ public class UserRepository {
         return dsl.insertInto(USERS)
                 .set(USERS.USERNAME, user.username())
                 .returning()
-                .fetchOne(r -> new User(
-                        r.getId(),
-                        r.getUsername()
-                ));
+                .fetchOne(mapping(User::new));
     }
 
     public void updateUser(Long id, User user) {
@@ -58,7 +55,7 @@ public class UserRepository {
                 });
     }
 
-    // TODO: rethink if we really need two queries here
+    // TODO: rethink if we really need two queries here, postgres might have something for this case
     public void deleteUser(Long id) {
         boolean exists = dsl.fetchExists(
                 dsl.selectOne().from(USERS).where(USERS.ID.eq(id))

@@ -33,18 +33,12 @@ public class UserControllerTest {
     @MockBean
     UserService userService;
 
-    private ObjectMapper om;
+    private final ObjectMapper om = new ObjectMapper();
     private User user;
-    // TODO: check if we can make more use of these dummy variable or if we just want to remove them
-    private User userWithEmptyUsername;
-    private User userWithBlankUsername;
 
     @BeforeEach
     void setUp() {
         this.user = new User(1L, "John Doe");
-        this.userWithEmptyUsername = new User(null, "");
-        this.userWithBlankUsername = new User(null, "  ");
-        this.om = new ObjectMapper();
     }
 
 

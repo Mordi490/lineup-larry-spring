@@ -45,12 +45,12 @@ public class LineupService {
         if (lineup.id() != null) {
             throw new InvalidLineupException.IncludedLineupIdException(lineup.id());
         }
-        validateCreateData(lineup.title(), lineup.body(), lineup.userId());
+        validateCreateData(lineup);
         return lineupRepository.createLineup(lineup);
     }
 
     public void updateLineup(Long id, Lineup lineup) {
-        validateUpdateLineupData(id, lineup.id(), lineup.title(), lineup.body(), lineup.userId());
+        validateUpdateLineupData(id, lineup);
         lineupRepository.updateLineup(lineup);
     }
 
@@ -59,55 +59,67 @@ public class LineupService {
     }
 
     // remember to revisit these once auth has been impl
-    private void validateCreateData(String title, String body, Long userId) {
-        if (title == null) {
+    private void validateCreateData(Lineup lineupToValidate) {
+        if (!lineupToValidate.agent().isValidAgent(lineupToValidate.agent().toString())) {
+            throw new InvalidLineupException.InvalidAgentException(lineupToValidate.agent().toString());
+        }
+        if (!lineupToValidate.map().isValidMap(lineupToValidate.map().toString())) {
+            throw new InvalidLineupException.InvalidMapException(lineupToValidate.map().toString());
+        }
+        if (lineupToValidate.title() == null) {
             throw new InvalidLineupException.NullTitleException();
         }
-        if (body == null) {
+        if (lineupToValidate.body() == null) {
             throw new InvalidLineupException.NullBodyException();
         }
-        if (userId == null) {
+        if (lineupToValidate.userId() == null) {
             throw new InvalidLineupException.UserIdNullException();
         }
-        if (title.isEmpty()) {
+        if (lineupToValidate.title().isEmpty()) {
             throw new InvalidLineupException.EmptyTitleException();
         }
-        if (body.isEmpty()) {
+        if (lineupToValidate.body().isEmpty()) {
             throw new InvalidLineupException.EmptyBodyException();
         }
-        if (title.isBlank()) {
+        if (lineupToValidate.title().isBlank()) {
             throw new InvalidLineupException.BlankTitleException();
         }
-        if (body.isBlank()) {
+        if (lineupToValidate.body().isBlank()) {
             throw new InvalidLineupException.BlankBodyException();
         }
     }
 
-    private void validateUpdateLineupData(Long id, Long lineupId, String title, String body, Long userId) {
-        if (!id.equals(lineupId)) {
-            throw new InvalidLineupException.ChangedLineupIdException(id, lineupId);
+    // UPDATE THIS TO USE take a lineup as param instead of the other thingies
+    private void validateUpdateLineupData(Long id, Lineup lineupToUpdate) {
+        if (lineupToUpdate.id() == null) {
+            throw new InvalidLineupException.ChangedLineupIdException(id, null);
         }
-        if (title == null) {
+        if (!lineupToUpdate.id().equals(id)) {
+            throw new InvalidLineupException.ChangedLineupIdException(id, lineupToUpdate.id());
+        }
+        if (!lineupToUpdate.agent().isValidAgent(lineupToUpdate.agent().toString())) {
+            throw new InvalidLineupException.InvalidAgentException(lineupToUpdate.agent().toString());
+        }
+        if (!lineupToUpdate.map().isValidMap(lineupToUpdate.map().toString())) {
+            throw new InvalidLineupException.InvalidMapException(lineupToUpdate.map().toString());
+        }
+        if (lineupToUpdate.title() == null) {
             throw new InvalidLineupException.NullTitleException();
         }
-        if (title.isEmpty()) {
+        if (lineupToUpdate.title().isEmpty()) {
             throw new InvalidLineupException.EmptyTitleException();
         }
-        if (title.isBlank()) {
+        if (lineupToUpdate.title().isBlank()) {
             throw new InvalidLineupException.BlankTitleException();
         }
-        if (body == null) {
+        if (lineupToUpdate.body() == null) {
             throw new InvalidLineupException.NullBodyException();
         }
-        if (body.isEmpty()) {
+        if (lineupToUpdate.body().isEmpty()) {
             throw new InvalidLineupException.EmptyBodyException();
         }
-        if (body.isBlank()) {
+        if (lineupToUpdate.body().isBlank()) {
             throw new InvalidLineupException.BlankBodyException();
-        }
-        // check if a lineup exists
-        if (!lineupId.equals(userId)) {
-            throw new InvalidLineupException.ChangedLineupIdException(lineupId, userId);
         }
     }
 }

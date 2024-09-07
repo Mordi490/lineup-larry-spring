@@ -1,47 +1,55 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.net.URI;
 import java.time.Instant;
 
-/**
- * Errors follow the ProblemDetails RFC
- * <p>
- * Structure explanations:
- * {
- * type: about:blank // TODO: find a good way to use this field
- * title: No user found // a generic, short, concise explanation
- * status: 404
- * detail: No user exists for the provided id // A more specific explanation, ie. includes the data we deem as faulty.
- * instance: /api/lineups/user/999
- * time: 2024-07-29T19:44:03.127548222Z
- * <p>
- * }
- * <p>
- * Example:
- * {
- * type: someshit
- * title: No user found
- * status: 404
- * detail: No user found with id 999
- * instance: /api/lineups/user/999
- * time: 2024-07-29T19:44:03.127548222Z
- * }
- */
+// exnteds ResponseEntityExceptionHandler
+
 @RestControllerAdvice
 public class GlobalExceptionController {
 
     private final String BAD_REQUEST = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400";
     private final String NOT_FOUND = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404";
 
+    // Don't
+    /*
+    // default handler for exceptions
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleUnknownGenericError(Exception e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problemDetail.setTitle(e.getCause().toString());
+        problemDetail.setDetail(e.getMessage());
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+     */
+
+    // Consider redoing this at when opting for Spring's ProblemDetail thingies
+    // Generic you gave me bad data pd
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problemDetail.setTitle("Invalid data");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        String error = String.format("Invalid value '%s' for parameter '%s'. Expected type: '%s'",
+                e.getValue(), e.getName(), e.getRequiredType().getSimpleName());
+        problemDetail.setDetail(error);
+        return problemDetail;
+    }
 
     // User Exceptions
     @ExceptionHandler(InvalidUserException.IdDoesNotMatchUserException.class)
@@ -107,21 +115,23 @@ public class GlobalExceptionController {
         return problemDetail;
     }
 
+    // NB! this is different from the one above!
+    // may get invoked when fetching all lineups given a user's id
+    @ExceptionHandler(InvalidLineupException.NoUserException.class)
+    public ProblemDetail handleNoUserExceptionException(InvalidLineupException.NoUserException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+        problemDetail.setTitle("User not found");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(NOT_FOUND));
+        return problemDetail;
+    }
+
     @ExceptionHandler(InvalidUserException.IncludedUserIdException.class)
     public ProblemDetail handleIncludedUserIdException(InvalidUserException.IncludedUserIdException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
         problemDetail.setTitle("The userId provided is not valid");
         problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(BAD_REQUEST));
-        return problemDetail;
-    }
-
-    @ExceptionHandler(InvalidLineupException.NoUserException.class)
-    public ProblemDetail handleNoSuchUser(InvalidLineupException.NoUserException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-        problemDetail.setTitle("User not found");
-        problemDetail.setProperty("time", Instant.now());
-        problemDetail.setType(URI.create(NOT_FOUND));
         return problemDetail;
     }
 
@@ -143,21 +153,6 @@ public class GlobalExceptionController {
         return problemDetail;
     }
 
-    /*
-    @ExceptionHandler(InvalidLineupException.NullBodyException.class)
-    public ProblemDetail handleNullBodyException(InvalidLineupException.NullBodyException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(BAD_REQUEST, e.getMessage());
-        return problemDetail;
-    }
-
-    @ExceptionHandler(InvalidLineupException.UserIdNullException.class)
-    @ExceptionHandler(InvalidLineupException.EmptyTitleException.class)
-    @ExceptionHandler(InvalidLineupException.EmptyBodyException.class)
-    @ExceptionHandler(InvalidLineupException.BlankTitleException.class)
-    @ExceptionHandler(InvalidLineupException.BlankBodyException.class)
-     */
-
-    // TODO: consider having this just return the most pressing concern for each FieldError
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidationExceptions(MethodArgumentNotValidException e) {
         // Collect validation errors
@@ -179,6 +174,64 @@ public class GlobalExceptionController {
         problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(BAD_REQUEST));
 
+        return problemDetail;
+    }
+
+    // handle cases where we get enums that don't make sense
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        // assuming happy path for now...
+        if (e.getCause() instanceof InvalidFormatException) {
+            // determine if it's agent or map
+            String invalidValue = extractInvalidValue(e.getMessage());
+            if (e.getMessage().contains("SOVA")) {
+                InvalidLineupException.InvalidAgentException ex = new InvalidLineupException.InvalidAgentException(invalidValue);
+                return handleInvalidAgentException(ex);
+            }
+            if (e.getMessage().contains("ASCENT")) {
+                InvalidLineupException.InvalidMapException ex = new InvalidLineupException.InvalidMapException(invalidValue);
+                return handleInvalidMapException(ex);
+            }
+            problemDetail.setDetail("Invalid enum spotted!");
+        }
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+
+    // hacky solution but, should look for alternate solutions
+    private static String extractInvalidValue(String message) {
+        String prefix = "from String \"";
+        String suffix = "\": not one of the values accepted";
+
+        int startIndex = message.indexOf(prefix);
+        if (startIndex != -1) {
+            startIndex += prefix.length();
+            int endIndex = message.indexOf(suffix, startIndex);
+            if (endIndex != -1) {
+                return message.substring(startIndex, endIndex);
+            }
+        }
+
+        return null;  // Return null or throw an exception if not found
+    }
+
+    @ExceptionHandler(InvalidLineupException.InvalidAgentException.class)
+    public ProblemDetail handleInvalidAgentException(InvalidLineupException.InvalidAgentException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+        problemDetail.setTitle("Invalid agent");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvalidLineupException.InvalidMapException.class)
+    public ProblemDetail handleInvalidMapException(InvalidLineupException.InvalidMapException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+        problemDetail.setTitle("Invalid map");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
         return problemDetail;
     }
 }

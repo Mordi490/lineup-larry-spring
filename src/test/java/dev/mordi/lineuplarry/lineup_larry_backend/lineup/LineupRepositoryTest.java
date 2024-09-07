@@ -1,5 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +71,7 @@ public class LineupRepositoryTest {
     // Create
     @Test
     void successfulCreationOfLineup() {
-        Lineup newLineup = new Lineup(null, "newly created lineup", "newly created lineup body", 2L);
+        Lineup newLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "newly created lineup", "newly created lineup body", 2L);
 
         Lineup res = lineupRepository.createLineup(newLineup);
 
@@ -81,7 +83,7 @@ public class LineupRepositoryTest {
 
     @Test
     void failCreateDueToUsingNonexistentUserId() {
-        Lineup lineupWithNonexistentUserId = new Lineup(null, "valid title", "valid body", 999L);
+        Lineup lineupWithNonexistentUserId = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "valid body", 999L);
 
         // should be something like this
         assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
@@ -91,6 +93,8 @@ public class LineupRepositoryTest {
 
     // TODO: revisit this once security has been
     // ie. fail because the user's provided principal does not match with the set userId
+
+    
     // Update
     // success
     @Test
@@ -105,7 +109,7 @@ public class LineupRepositoryTest {
         assertThat(lineupToFetch.get().id()).isEqualTo(1L);
         assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
 
-        Lineup newLineupData = new Lineup(lineupToFetch.get().id(), "updated title", "updated body", lineupToFetch.get().userId());
+        Lineup newLineupData = new Lineup(lineupToFetch.get().id(), Agent.KILLJOY, Map.SUNSET, "updated title", "updated body", lineupToFetch.get().userId());
         lineupRepository.updateLineup(newLineupData);
 
         Optional<Lineup> updatedLineup = lineupRepository.getLineupById(1L);
@@ -114,10 +118,8 @@ public class LineupRepositoryTest {
             throw new RuntimeException("Failed to fetch updated user");
         }
 
-        assertThat(updatedLineup.get().title()).isEqualTo("updated title");
-        assertThat(updatedLineup.get().body()).isEqualTo("updated body");
-        assertThat(updatedLineup.get().id()).isEqualTo(1L);
-        assertThat(updatedLineup.get().userId()).isEqualTo(1L);
+        assertThat(updatedLineup.get()).isEqualTo(newLineupData);
+        assertThat(updatedLineup.get().toString()).isEqualTo(newLineupData.toString());
     }
 
     // delete

@@ -42,13 +42,6 @@ public class InvalidLineupException extends RuntimeException {
         }
     }
 
-    public static class NullLineupIdException extends InvalidLineupException {
-        public NullLineupIdException() {
-            super("Lineup id cannot be null");
-        }
-    }
-
-
     public static class UserIdNullException extends InvalidLineupException {
         public UserIdNullException() {
             super("UserId cannot be null");
@@ -71,6 +64,18 @@ public class InvalidLineupException extends RuntimeException {
     public static class IncludedLineupIdException extends InvalidLineupException {
         public IncludedLineupIdException(Long id) {
             super("Do not supply an id when creating a lineup\nCannot create lineup with id: '" + id + "'");
+        }
+    }
+
+    public static class InvalidAgentException extends InvalidLineupException {
+        public InvalidAgentException(String str) {
+            super("The agent '" + str + "' is not a valid agent");
+        }
+    }
+
+    public static class InvalidMapException extends InvalidLineupException {
+        public InvalidMapException(String str) {
+            super("The map '" + str + "' is not a valid map");
         }
     }
 

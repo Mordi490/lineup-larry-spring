@@ -170,7 +170,6 @@ public class UserServiceTest {
 
     // updateUser: failure
     // mismatched ids
-    // TODO: figure out what the fuck we're doing wrong here
     @Test
     void failUpdateWithMismatchedId() {
         Long id = 4L;

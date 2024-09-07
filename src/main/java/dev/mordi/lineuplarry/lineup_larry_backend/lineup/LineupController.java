@@ -37,7 +37,7 @@ public class LineupController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // TODO: improve endpoint naming, this shit is ass atm
+    // TODO: improve endpoint URI, this is
     @GetMapping("/search")
     public ResponseEntity<List<Lineup>> getByTitle(@RequestParam String title) {
         Optional<List<Lineup>> lineups = lineupService.getByTitle(title);

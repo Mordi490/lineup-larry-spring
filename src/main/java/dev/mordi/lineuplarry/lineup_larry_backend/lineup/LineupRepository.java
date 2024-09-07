@@ -22,23 +22,25 @@ public class LineupRepository {
     }
 
     public List<Lineup> findAllLineups() {
-        return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
-                .fetch(r -> new Lineup(r.get(LINEUP.ID), r.get(LINEUP.TITLE), r.get(LINEUP.BODY), r.get(LINEUP.USER_ID)));
+                .fetch()
+                .map(mapping(Lineup::new));
     }
 
     public Lineup createLineup(Lineup lineup) {
         if (doesUserExist(lineup.userId(), true)) {
             return dsl.insertInto(LINEUP)
                     .set(LINEUP.TITLE, lineup.title())
+                    .set(LINEUP.AGENT, lineup.agent())
+                    .set(LINEUP.MAP, lineup.map())
                     .set(LINEUP.BODY, lineup.body())
                     .set(LINEUP.USER_ID, lineup.userId())
                     .returning()
-                    .fetchOne(record -> new Lineup(record.getId(), record.getTitle(), record.getBody(), record.getUserId()));
+                    .fetchOne(mapping(Lineup::new));
         } else {
             throw new RuntimeException("Failed to create lineup");
         }
-
     }
 
     private boolean doesUserExist(Long userId, boolean isCreate) {
@@ -55,11 +57,11 @@ public class LineupRepository {
     }
 
     public Optional<Lineup> getLineupById(Long id) {
-        return dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.ID.eq(id))
                 .fetchOptional()
-                .map(mapping(Lineup::create));
+                .map(mapping(Lineup::new));
     }
 
     public void updateLineup(Lineup lineup) {
@@ -67,7 +69,9 @@ public class LineupRepository {
                 .ifPresent(r -> {
                     r.setId(lineup.id());
                     r.setTitle(lineup.title());
-                    r.setBody(lineup.body()); // I assume that userId is never going to change
+                    r.setBody(lineup.body());
+                    r.setAgent(lineup.agent());
+                    r.setMap(lineup.map());
                     r.store();
                 });
     }
@@ -84,21 +88,21 @@ public class LineupRepository {
             throw new InvalidLineupException.NoUserException(id);
         }
 
-        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.USER_ID.eq(id))
                 .fetch()
-                .map(mapping(Lineup::create));
+                .map(mapping(Lineup::new));
 
         return Optional.of(lineups);
     }
 
     public Optional<List<Lineup>> getByTitle(String name) {
-        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.TITLE.eq(name))
                 .fetch()
-                .map(mapping(Lineup::create));
+                .map(mapping(Lineup::new));
 
         return lineups.isEmpty() ? Optional.empty() : Optional.of(lineups);
     }

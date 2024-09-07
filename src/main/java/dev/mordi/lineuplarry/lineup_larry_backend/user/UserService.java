@@ -20,7 +20,6 @@ public class UserService {
     }
 
     public Optional<User> getById(Long id) {
-        // TODO validate here
         return userRepository.getUserById(id);
     }
 

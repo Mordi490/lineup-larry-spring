@@ -139,6 +139,22 @@
                                         <inputSchema>public</inputSchema>
                                         <excludes>flyway_schema_history
                                         </excludes>
+                                        <ForcedTypes>
+                                            <forcedType>
+                                                <userType>dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent
+                                                </userType>
+                                                <enumConverter>true</enumConverter>
+                                                <includeExpression>public\.lineup\.agent</includeExpression>
+                                                <includeTypes>.*</includeTypes>
+                                            </forcedType>
+                                            <forcedType>
+                                                <userType>dev.mordi.lineuplarry.lineup_larry_backend.enums.Map
+                                                </userType>
+                                                <enumConverter>true</enumConverter>
+                                                <includeExpression>public\.lineup\.map</includeExpression>
+                                                <includeTypes>.*</includeTypes>
+                                            </forcedType>
+                                        </ForcedTypes>
                                     </database>
                                     <target>
                                         <packageName>

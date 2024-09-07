@@ -92,7 +92,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void successfulDelete() {
+    void successfulDeleteUserWithNoLineups() {
         Optional<User> userToDelete = userRepository.getUserById(4L);
         assertThat(userToDelete).isPresent();
 
@@ -114,5 +114,16 @@ public class UserRepositoryTest {
         assertThrows(InvalidUserException.UserNotFoundException.class, () -> {
             userRepository.deleteUser(22L);
         });
+    }
+
+    // delete user with lineups, cascading, meaning lineups tied to this user also gets delete
+    // NB! simply tests if postgres permits the deletion of a user with lineups
+    @Test
+    void successfulDeleteUserWithLineups() {
+        Optional<User> userWithLineups = userRepository.getUserById(2L);
+        // for reference the user (2) has lineup (ids) 2 and 3
+        assertThat(userWithLineups).isPresent();
+
+        userRepository.deleteUser(2L);
     }
 }

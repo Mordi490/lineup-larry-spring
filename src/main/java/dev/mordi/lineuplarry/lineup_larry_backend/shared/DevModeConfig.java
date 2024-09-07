@@ -1,5 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.Lineup;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupRepository;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
@@ -36,11 +38,12 @@ public class DevModeConfig {
                 userRepository.createUser(new User(null, "userFive"));
 
                 // add lineups
-                lineupRepository.createLineup(new Lineup(null, "titleOne", "bodyOne", 1L));
-                lineupRepository.createLineup(new Lineup(null, "titleTwo", "bodyTwo", 2L));
-                lineupRepository.createLineup(new Lineup(null, "titleThree", "bodyThree", 2L));
-                lineupRepository.createLineup(new Lineup(null, "titleFour", "bodyFour", 3L));
-                lineupRepository.createLineup(new Lineup(null, "titleFour", "bodyFour", 3L));
+                lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L));
+                lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 2L));
+                lineupRepository.createLineup(new Lineup(null, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 2L));
+                lineupRepository.createLineup(new Lineup(null, Agent.CYPHER, Map.SUNSET, "titleFour", "bodyFour", 3L));
+                lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L));
+                lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L));
 
                 // more to come
 

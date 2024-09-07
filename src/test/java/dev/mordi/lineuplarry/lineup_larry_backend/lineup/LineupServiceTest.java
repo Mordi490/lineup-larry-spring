@@ -1,5 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,14 +41,13 @@ public class LineupServiceTest {
         User userWithoutLineups = new User(2L, "userTwo");
 
 
-        lineupOne = new Lineup(1L, "titleOne", "bodyOne", 1L);
-        lineupTwo = new Lineup(2L, "titleTwo", "bodyTwo", 1L);
-        lineupThree = new Lineup(3L, "titleThree", "bodyThree", 1L);
-        lineupFour = new Lineup(4L, "same name", "bodyThree", 1L);
-        lineupFive = new Lineup(5L, "same name", "bodyThree", 1L);
+        lineupOne = new Lineup(1L, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L);
+        lineupTwo = new Lineup(2L, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 1L);
+        lineupThree = new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 1L);
+        lineupFour = new Lineup(4L, Agent.CYPHER, Map.SUNSET, "same name", "bodyThree", 1L);
+        lineupFive = new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree", 1L);
     }
 
-    // TODO: redo all the blank, empty, null test, usage of annotations broke the tests (zzz)
     @Test
     void getAll() {
         List<Lineup> allLineups = Arrays.asList(lineupOne, lineupTwo, lineupThree, lineupFour, lineupFive);
@@ -138,8 +139,8 @@ public class LineupServiceTest {
     // create lineup
     @Test
     void successfulLineup() {
-        Lineup lineupToCreate = new Lineup(null, "created lineup title", "created body content", 1L);
-        Lineup lineupCreatedResponse = new Lineup(5L, lineupToCreate.title(), lineupToCreate.body(), lineupToCreate.userId());
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created lineup title", "created body content", 1L);
+        Lineup lineupCreatedResponse = new Lineup(5L, Agent.SOVA, Map.ASCENT, lineupToCreate.title(), lineupToCreate.body(), lineupToCreate.userId());
         when(lineupRepository.createLineup(lineupToCreate)).thenReturn(lineupCreatedResponse);
 
         Lineup actualResponse = lineupService.createLineup(lineupToCreate);
@@ -150,11 +151,10 @@ public class LineupServiceTest {
     }
 
     // fail on given id (lineup id)
-    // TODO: you are here wtf doing man
     @Test
     void declineLineupCreationDueToHavingId() {
         Long lineupId = 44L;
-        Lineup lineupToReject = new Lineup(lineupId, "muh title", "muh body", 1L);
+        Lineup lineupToReject = new Lineup(lineupId, Agent.SOVA, Map.ASCENT, "muh title", "muh body", 1L);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupToReject))
                 .isInstanceOf(InvalidLineupException.IncludedLineupIdException.class)
@@ -167,7 +167,7 @@ public class LineupServiceTest {
     // fail on blanks and empty title/content
     @Test
     void failCreateOnBlankTitle() {
-        Lineup lineupWithBlankTitle = new Lineup(null, "  ", "valid body", 1L);
+        Lineup lineupWithBlankTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "  ", "valid body", 1L);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithBlankTitle))
                 .isInstanceOf(InvalidLineupException.BlankTitleException.class)
@@ -177,7 +177,7 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnEmptyTitle() {
-        Lineup lineupWithEmptyTitle = new Lineup(null, "", "valid body", 1L);
+        Lineup lineupWithEmptyTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "", "valid body", 1L);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithEmptyTitle))
                 .isInstanceOf(InvalidLineupException.EmptyTitleException.class)
@@ -187,7 +187,7 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnBlankBody() {
-        Lineup lineupWithBlankBody = new Lineup(null, "valid title", "  ", 1L);
+        Lineup lineupWithBlankBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "  ", 1L);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithBlankBody))
                 .isInstanceOf(InvalidLineupException.BlankBodyException.class)
@@ -197,7 +197,7 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnEmptyBody() {
-        Lineup lineupWithEmptyBody = new Lineup(null, "valid title", "", 1L);
+        Lineup lineupWithEmptyBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "", 1L);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithEmptyBody))
                 .isInstanceOf(InvalidLineupException.EmptyBodyException.class)
@@ -219,7 +219,7 @@ public class LineupServiceTest {
     // fail updates on removal of id
     @Test
     void failUpdateOnChangedLineupIdChange() {
-        Lineup randomLineup = new Lineup(33L, "some title", "some body", 2L);
+        Lineup randomLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "some title", "some body", 2L);
 
         assertThatThrownBy(() -> lineupService.updateLineup(2L, randomLineup))
                 .isInstanceOf(InvalidLineupException.ChangedLineupIdException.class)

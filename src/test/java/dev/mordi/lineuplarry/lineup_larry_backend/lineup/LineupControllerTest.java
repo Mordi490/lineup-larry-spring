@@ -2,6 +2,8 @@ package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +39,7 @@ public class LineupControllerTest {
     @MockBean
     LineupService lineupService;
 
-    private ObjectMapper om;
+    private final ObjectMapper om = new ObjectMapper();
 
     private User userWithLineups;
     private User userWithNoLineups;
@@ -48,10 +51,9 @@ public class LineupControllerTest {
     void setUp() {
         this.userWithLineups = new User(1L, "John");
         this.userWithNoLineups = new User(2L, "Jane");
-        this.lineupOne = new Lineup(1L, "lineup title", "lineup body", 1L);
-        this.lineupTwo = new Lineup(2L, "lineup title two", "lineup body two", 1L);
-        this.lineupWithSameTitleAsLineupOne = new Lineup(4L, "lineup title", "lineup body", 1L);
-        this.om = new ObjectMapper();
+        this.lineupOne = new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L);
+        this.lineupTwo = new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineup title two", "lineup body two", 1L);
+        this.lineupWithSameTitleAsLineupOne = new Lineup(4L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L);
     }
 
     @Test
@@ -96,7 +98,6 @@ public class LineupControllerTest {
         verify(lineupService).getById(lineupId);
     }
 
-    // make it a 404
     @Test
     void getByIdOnNonexistentId() throws Exception {
         Long nonexistentId = 999L;
@@ -113,8 +114,8 @@ public class LineupControllerTest {
     @Test
     void getAllLineupsFromUserWithLineups() throws Exception {
         Long userId = lineupOne.userId();
-        Optional<List<Lineup>> yerr = Optional.of(Arrays.asList(lineupOne, lineupTwo));
-        when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(yerr);
+        Optional<List<Lineup>> userOnesLineups = Optional.of(Arrays.asList(lineupOne, lineupTwo));
+        when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(userOnesLineups);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
                 .andExpect(status().isOk())
@@ -136,29 +137,25 @@ public class LineupControllerTest {
         verify(lineupService).getAllLineupsFromUserId(userId);
     }
 
-    // TODO: Make sure the behavior is correct
     @Test
     void getAllLineupsFromNonexistentUser() throws Exception {
         Long nonexistentUserId = 222L;
         InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(nonexistentUserId);
         when(lineupService.getAllLineupsFromUserId(nonexistentUserId)).thenThrow(exception);
 
-        var res = mockMvc.perform(get("/api/lineups/user/{id}", nonexistentUserId))
+        mockMvc.perform(get("/api/lineups/user/{id}", nonexistentUserId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("User not found"))
-                .andExpect(jsonPath("$.detail").value("No user with id: '" + nonexistentUserId + "' exists"))
-                .andReturn();
+                .andExpect(jsonPath("$.detail").value("No user with id: '" + nonexistentUserId + "' exists"));
 
-        assertThat(res.getResponse().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON.toString());
-        assertThat(res.getResponse().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON.toString());
         verify(lineupService).getAllLineupsFromUserId(nonexistentUserId);
     }
 
     // create
     @Test
     void successfulCreateLineup() throws Exception {
-        Lineup lineupToCreate = new Lineup(null, "created title", "created body", userWithLineups.id());
-        Lineup expectedLineupCreatedResult = new Lineup(3L, "created title", "created body", userWithLineups.id());
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
+        Lineup expectedLineupCreatedResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
         when(lineupService.createLineup(lineupToCreate)).thenReturn(expectedLineupCreatedResult);
 
         try {
@@ -177,8 +174,8 @@ public class LineupControllerTest {
 
     @Test
     void successfulCreateLineupWithNullId() throws Exception {
-        Lineup lineupToCreate = new Lineup(null, "created title", "created body", userWithLineups.id());
-        Lineup expectedLineupResult = new Lineup(3L, "created title", "created body", userWithLineups.id());
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
+        Lineup expectedLineupResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
         when(lineupService.createLineup(lineupToCreate)).thenReturn(expectedLineupResult);
 
         try {
@@ -200,7 +197,7 @@ public class LineupControllerTest {
     // update
     @Test
     void successfulUpdate() throws Exception {
-        Lineup newLineupData = new Lineup(lineupOne.id(), "updated title", "updated body", lineupOne.userId());
+        Lineup newLineupData = new Lineup(lineupOne.id(), Agent.SOVA, Map.ASCENT, "updated title", "updated body", lineupOne.userId());
         doNothing().when(lineupService).updateLineup(newLineupData.id(), newLineupData);
 
         try {
@@ -374,5 +371,41 @@ public class LineupControllerTest {
         var lineups = lineupService.getByTitle("bad search title");
 
         assertThat(lineups).isEmpty();
+    }
+
+    @Test
+    void failCreateOnInvalidAgent() throws Exception {
+        var res = mockMvc.perform(post("/api/lineups")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"valid title","body":"valid body","agent":"INVALIDAGENT","map":"SUNSET","userId":1}"""))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        try {
+            assertThat(res.getResponse().getContentAsString()).isNotEmpty();
+            assertThat(res.getResponse().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON.toString());
+            assertThat(res.getResponse().getContentAsString()).containsIgnoringCase("'INVALIDAGENT' is not a valid agent");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void failCreateOnInvalidMap() throws Exception {
+        var res = mockMvc.perform(post("/api/lineups")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"valid title","body":"valid body","agent":"SOVA","map":"INVALIDMAP","userId":2}"""))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        try {
+            assertThat(res.getResponse().getContentAsString()).isNotEmpty();
+            assertThat(res.getResponse().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON.toString());
+            assertThat(res.getResponse().getContentAsString()).containsIgnoringCase("'INVALIDMAP' is not a valid map");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
