@@ -311,46 +311,4 @@ public class LineupServiceTest {
      * lineupThree = new Lineup(5L, "same name", "bodyThree", 1L);
      */
 
-    @Test
-    void successfulGetByTitle() {
-        List<Lineup> expectedList = Arrays.asList(lineupFour, lineupFive);
-        when(lineupRepository.getByTitle("same name")).thenReturn(Optional.of(expectedList));
-
-        Optional<List<Lineup>> lineups = lineupRepository.getByTitle("same name");
-
-        assertThat(lineups).isPresent();
-        assertThat(lineups.get()).size().isEqualTo(2);
-        verify(lineupRepository).getByTitle("same name");
-    }
-
-    @Test
-    void successfulGetByTitleNoMatches() {
-        Optional<List<Lineup>> expectedEmptyOptional = Optional.empty();
-        String searchString = "some title that will not receive any matches";
-        when(lineupRepository.getByTitle(searchString)).thenReturn(expectedEmptyOptional);
-
-        Optional<List<Lineup>> lineups = lineupRepository.getByTitle(searchString);
-
-        assertThat(lineups).isEmpty();
-        verify(lineupRepository).getByTitle(searchString);
-    }
-
-    // expect to get errs on blank and empty strings
-    @Test
-    void failGetByTitleOnEmptyString() {
-        assertThatThrownBy(() -> lineupService.getByTitle(""))
-                .isInstanceOf(InvalidLineupException.EmptySearchTitleException.class)
-                .hasMessage("Cannot search for string: '', since it's empty");
-
-        verify(lineupRepository, never()).getByTitle("");
-    }
-
-    @Test
-    void failGetByTitleOnBlankString() {
-        assertThatThrownBy(() -> lineupService.getByTitle("  "))
-                .isInstanceOf(InvalidLineupException.BlankSearchTitleException.class)
-                .hasMessage("Cannot search for string '  ', since it's blank");
-
-        verify(lineupRepository, never()).getByTitle("  ");
-    }
 }

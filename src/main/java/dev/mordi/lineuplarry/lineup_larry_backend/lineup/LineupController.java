@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +26,17 @@ public class LineupController {
     }
 
     @GetMapping()
-    public List<Lineup> getAllLineups() {
-        return lineupService.getAll();
+    public ResponseEntity<List<Lineup>> getLineups(@RequestParam(required = false) String title) {
+        // exhaustive switch statement maybe
+        if (title != null) {
+            // If the title is provided, search by title
+            List<Lineup> lineups = lineupService.getByTitle(title).orElse(Collections.emptyList());
+            return new ResponseEntity<>(lineups, HttpStatus.OK);
+        } else {
+            // If the title is not provided, return all lineups
+            List<Lineup> allLineups = lineupService.getAll();
+            return new ResponseEntity<>(allLineups, HttpStatus.OK);
+        }
     }
 
     // TODO: consider using @RequestParam, might wait till we start with the SPA
@@ -34,14 +44,6 @@ public class LineupController {
     public ResponseEntity<Lineup> getById(@PathVariable Long id) {
         Optional<Lineup> lineup = lineupService.getById(id);
         return lineup.map(ResponseEntity::ok)
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    // TODO: improve endpoint URI, this is
-    @GetMapping("/search")
-    public ResponseEntity<List<Lineup>> getByTitle(@RequestParam String title) {
-        Optional<List<Lineup>> lineups = lineupService.getByTitle(title);
-        return lineups.map(ResponseEntity::ok)
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 

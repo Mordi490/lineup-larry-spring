@@ -112,7 +112,7 @@ public class LineupControllerTest {
 
     // getAllByUserId: "/api/lineups/user/{id}"
     @Test
-    void getAllLineupsFromUserWithLineups() throws Exception {
+    void getLineupsFromUserWithLineups() throws Exception {
         Long userId = lineupOne.userId();
         Optional<List<Lineup>> userOnesLineups = Optional.of(Arrays.asList(lineupOne, lineupTwo));
         when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(userOnesLineups);
@@ -125,7 +125,7 @@ public class LineupControllerTest {
     }
 
     @Test
-    void getAllLineupsFromUserWithNoLineups() throws Exception {
+    void getLineupsFromUserWithNoLineups() throws Exception {
         Long userId = userWithNoLineups.id();
         Optional<List<Lineup>> emptyArray = Optional.of(Arrays.asList());
         when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(emptyArray);
@@ -138,7 +138,7 @@ public class LineupControllerTest {
     }
 
     @Test
-    void getAllLineupsFromNonexistentUser() throws Exception {
+    void getLineupsFromNonexistentUser() throws Exception {
         Long nonexistentUserId = 222L;
         InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(nonexistentUserId);
         when(lineupService.getAllLineupsFromUserId(nonexistentUserId)).thenThrow(exception);

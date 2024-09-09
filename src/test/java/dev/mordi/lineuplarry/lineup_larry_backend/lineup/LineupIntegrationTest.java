@@ -63,6 +63,62 @@ public class LineupIntegrationTest {
         assertThat(res.getBody().getFirst()).isEqualTo(new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L));
     }
 
+    // get by title has matches
+    @Test
+    void successfulSearchByTitleWithMatches() {
+        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+                "/api/lineups?title=same+name",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody().size()).isEqualTo(2);
+    }
+
+    // get by title has zero matches
+    @Test
+    void successfulSearchByTitleWithNoMatches() {
+        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+                "/api/lineups?title=this+will+not+give+any+results",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody().size()).isEqualTo(0);
+    }
+
+    @Test
+    void failGetByTitleOnBlankSearchTitle() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?title=    ",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsIgnoringCase("Search title cannot be blank");
+    }
+
+    @Test
+    void failGetByTitleOnEmptySearchTitle() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?title=",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsIgnoringCase("Search title cannot be empty");
+    }
+
     // getByID
     @Test
     void getFromValidId() {
@@ -578,70 +634,6 @@ public class LineupIntegrationTest {
         assertThat(res.getBody()).isNull();
     }
     // unsuccessfully delete TODO: once auth has been impl
-
-    // getByTitle
-    // lineupId 5 and 6 share the same title; "same name"
-    @Test
-    void successfulGetByTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<Optional<List<Lineup>>> response = restTemplate.exchange(
-                "/api/lineups/search?title=same+name",
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                new ParameterizedTypeReference<>() {
-                }
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isPresent();
-        assertThat(response.getBody().get().size()).isEqualTo(2);
-        assertThat(response.getBody().get().toString()).isEqualTo("""
-                [Lineup[id=5, agent=KILLJOY, map=ICEBOX, title=same name, body=bodyFour, userId=3], Lineup[id=6, agent=KILLJOY, map=ICEBOX, title=same name, body=bodyFour, userId=3]]""");
-    }
-
-    @Test
-    void successfulGetByTitleNoMatches() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<Optional<List<Lineup>>> response = restTemplate.exchange(
-                "/api/lineups/search?title=bad+search",
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                new ParameterizedTypeReference<>() {
-                }
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    void failGetByTitleOnBlankSearchTitle() {
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups/search?title=",
-                HttpMethod.GET,
-                null,
-                String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsIgnoringCase("title cannot be empty");
-    }
-
-    @Test
-    void failGetByTitleOnEmptySearchTitle() {
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups/search?title=    ",
-                HttpMethod.GET,
-                null,
-                String.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsIgnoringCase("title cannot be blank");
-    }
 
     // CURRENT: check that we serialize the maps and agents correctly
 
