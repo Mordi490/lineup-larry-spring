@@ -55,16 +55,13 @@ public class UserRepository {
                 });
     }
 
-    // TODO: rethink if we really need two queries here, postgres might have something for this case
     public void deleteUser(Long id) {
-        boolean exists = dsl.fetchExists(
-                dsl.selectOne().from(USERS).where(USERS.ID.eq(id))
-        );
+        int rowsAffected = dsl.deleteFrom(USERS)
+                .where(USERS.ID.eq(id))
+                .execute();
 
-        if (!exists) {
+        if (rowsAffected == 0) {
             throw new InvalidUserException.UserNotFoundException(id);
         }
-
-        dsl.deleteFrom(USERS).where(USERS.ID.eq(id)).execute();
     }
 }
