@@ -24,7 +24,7 @@ public record Lineup(
         @NotNull(message = "title cannot be null")
         @NotBlank(message = "title cannot be blank")
         @NotEmpty(message = "title cannot be empty")
-        @Size(min = 3, max = 40, message = "Title must be between 3 and 40 characters")
+        @Size(min = 3, max = 40, message = "Title must be between {min} and {max} characters")
         String title,
 
         @NotNull(message = "body cannot be null")
