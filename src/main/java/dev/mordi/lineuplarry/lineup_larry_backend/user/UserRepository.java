@@ -26,17 +26,11 @@ public class UserRepository {
     }
 
     public Optional<User> getUserById(Long id) {
-        Optional<User> res = dsl.select(USERS.ID, USERS.USERNAME)
+        return dsl.select(USERS.ID, USERS.USERNAME)
                 .from(USERS)
                 .where(USERS.ID.eq(id))
                 .fetchOptional().map(mapping(User::new));
 
-        /*
-        if (res.isEmpty()) {
-            throw new InvalidLineupException.NoUserException(id);
-        }
-         */
-        return res;
     }
 
     // consider using "UserRecord" instead
