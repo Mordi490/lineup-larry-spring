@@ -2,6 +2,7 @@ package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,17 +12,14 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("/test-data.sql")
@@ -33,11 +31,7 @@ public class LineupIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    // temp sol on certain tests, till RestClient becomes stable
-    @Autowired
-    MockMvc mockMvc;
-
-    final ObjectMapper objectMapper = new ObjectMapper();
+    private static HttpHeaders headers;
 
     @Container
     @ServiceConnection
@@ -45,7 +39,12 @@ public class LineupIntegrationTest {
             "postgres:16.3-alpine"
     );
 
-    // getAll
+    @BeforeAll
+    static void initHeader() {
+        headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+    }
+
     @Test
     void successfulGetAll() {
         ResponseEntity<List<Lineup>> res = restTemplate.exchange(
@@ -56,14 +55,21 @@ public class LineupIntegrationTest {
                 }
         );
 
+        List<Lineup> expectedArray = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
+                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(6);
-        assertThat(res.getBody().getFirst()).isInstanceOf(Lineup.class);
-        assertThat(res.getBody().getFirst()).isEqualTo(new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L));
+        assertThat(res.getBody().size()).isEqualTo(expectedArray.size());
+        assertThat(res.getBody().stream().toList()).isEqualTo(expectedArray);
     }
 
-    // get by title has matches
     @Test
     void successfulSearchByTitleWithMatches() {
         ResponseEntity<List<Lineup>> res = restTemplate.exchange(
@@ -74,11 +80,17 @@ public class LineupIntegrationTest {
                 }
         );
 
+        List<Lineup> expectedArray = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(2);
+        assertThat(res.getBody().stream().toList()).isEqualTo(expectedArray);
     }
 
-    // get by title has zero matches
     @Test
     void successfulSearchByTitleWithNoMatches() {
         ResponseEntity<List<Lineup>> res = restTemplate.exchange(
@@ -90,6 +102,7 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(0);
     }
 
@@ -103,7 +116,8 @@ public class LineupIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsIgnoringCase("Search title cannot be blank");
+        assertThat(response.getBody()).contains("Search title cannot be blank");
+        assertThat(response.getBody()).contains("Cannot search for string: '    ', since it's blank");
     }
 
     @Test
@@ -116,12 +130,13 @@ public class LineupIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsIgnoringCase("Search title cannot be empty");
+        assertThat(response.getBody()).contains("Search title cannot be empty");
+        assertThat(response.getBody()).contains("Cannot search for string: '', since it's empty");
     }
 
     // getByID
     @Test
-    void getFromValidId() {
+    void successfulGetById() {
         ResponseEntity<Optional<Lineup>> res = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.GET,
@@ -130,14 +145,16 @@ public class LineupIntegrationTest {
                 }
         );
 
+        Lineup expectedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L);
+
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody()).isPresent();
-        assertThat(res.getBody().get()).isEqualTo(new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L));
+        assertThat(res.getBody().get()).isEqualTo(expectedLineup);
     }
 
     @Test
-    void getFromNonexistentId() {
+    void failToGetByIdOnNonexistentId() {
         ResponseEntity<Optional<Lineup>> res = restTemplate.exchange(
                 "/api/lineups/999",
                 HttpMethod.GET,
@@ -150,8 +167,6 @@ public class LineupIntegrationTest {
         assertThat(res.getBody()).isNull();
     }
 
-    // getAllLineupsFromAUser
-    // get from an existing user with lineups
     @Test
     void successfulGetAllLineupsFromUser() {
         ResponseEntity<List<Lineup>> res = restTemplate.exchange(
@@ -162,14 +177,18 @@ public class LineupIntegrationTest {
                 }
         );
 
+        // user 2 has lineups, 2 and 3:
+        List<Lineup> expectedLineups = List.of(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
+        );
+
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(2);
-        assertThat(res.getBody().getFirst()).isInstanceOf(Lineup.class);
-        assertThat(res.getBody().getFirst()).isEqualTo(new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L));
+        assertThat(res.getBody().stream().toList()).isEqualTo(expectedLineups);
     }
 
-    // get from an existing user without any lineups
     @Test
     void successfulGetAllLineupsFromUserWithoutLineups() {
         // in test-data.sql user 4 and 5 have no lineups
@@ -185,7 +204,6 @@ public class LineupIntegrationTest {
         assertThat(res.getBody()).isEmpty();
     }
 
-    // get from a nonexistent user
     @Test
     void failGetALlLineupsFromUserWithInvalidUserId() throws Exception {
         ResponseEntity<String> res = restTemplate.exchange(
@@ -196,20 +214,14 @@ public class LineupIntegrationTest {
                 }
         );
 
-        assertThat(res.getBody().toString()).contains("No user with id: '999' exists");
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        // we expect to receive {detail: no user with id: '999' exists, instance: /api/users/999 ...}
-        assertThat(res.toString()).contains("User not found");
+        assertThat(res.getBody()).contains("User not found");
+        assertThat(res.getBody()).contains("No user with id: '999' exists");
     }
 
-    // create
-    // valid create data
     @Test
     void successfulCreateLineup() {
         Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "lineup to create", "body to create", 2L);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
         ResponseEntity<Lineup> res = restTemplate.postForEntity(
                 "/api/lineups",
@@ -219,199 +231,190 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(res.getBody().id()).isNotNull();
-        // sequence has been set to start of at 101, to give headroom for seed data
+        // sequence has been set to start of at 101, to give headroom for seed data, only applies to "dev"-env
         assertThat(res.getBody().id()).isEqualTo(101);
     }
 
+
     @Test
     void successfulCreateLineupWithoutId() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithoutIdJsonTemplate = """
+                {"title":"lineup to create","body":"body to create","agent":"SOVA","map":"ICEBOX","userId":2}""";
 
         ResponseEntity<Lineup> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"lineup to create","body":"body to create","agent":"SOVA","map":"ICEBOX","userId":2}""", headers),
+                new HttpEntity<>(lineupWithoutIdJsonTemplate, headers),
                 Lineup.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody().id()).isNotNull();
-        // sequence has been set to start of at 101, to give headroom for seed data
+        assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().id()).isEqualTo(101);
     }
 
-    // various invalid data cases; blank, empty null, etc.
     @Test
     void failCreateOnNullTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithNullTitleJsonTemplate = """
+                {"title": null,"body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title": null,"body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}""", headers),
+                new HttpEntity<>(lineupWithNullTitleJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("title cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be blank");
     }
 
     @Test
     void failCreateOnNullBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithNullBodyJsonTemplate = """
+                {"title":"valid title","agent":"SOVA","map":"ASCENT","body":null,"userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","agent":"SOVA","map":"ASCENT","body":null,"userId":2}""", headers),
+                new HttpEntity<>(lineupWithNullBodyJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("body cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be blank");
     }
 
     @Test
     void failCreateOnBlankTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithBlankTitleJsonTemplate = """
+                {"title": "  ","body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title": "  ","body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}""", headers),
+                new HttpEntity<>(lineupWithBlankTitleJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("title cannot be blank");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be blank");
     }
 
-    // fail tests on missing agent and/or map
     @Test
     void failCreateOnMissingAgent() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithNullAgentJsonTemplate = """
+                {"title":"valid title","body":"valid body","map":"ASCENT","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","body":"valid body","map":"ASCENT","userId":2}""", headers),
+                new HttpEntity<>(lineupWithNullAgentJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("agent cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("agent: agent cannot be null");
     }
 
     @Test
     void failCreateOnInvalidAgent() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithInvalidAgentJsonTemplate = """
+                {"title":"valid title","body":"valid body","agent":"invalidAgent","map":"ASCENT","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","body":"valid body","agent":"invalidAgent","map":"ASCENT","userId":2}""", headers),
+                new HttpEntity<>(lineupWithInvalidAgentJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("the agent 'invalidAgent' is not a valid agent");
+        assertThat(res.getBody()).contains("Invalid agent");
+        assertThat(res.getBody()).contains("The agent 'invalidAgent' is not a valid agent");
     }
 
     @Test
     void failCreateOnMissingMap() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithNullMapJsonTemplate = """
+                {"title":"valid title","body":"valid body","agent":"SOVA","userId":2}""";
+
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","body":"valid body","agent":"SOVA","userId":2}""", headers),
+                new HttpEntity<>(lineupWithNullMapJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("map cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("map: map cannot be null");
     }
 
     @Test
     void failCreateOnInvalidMap() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithInvalidMapJsonTemplate = """
+                {"title":"valid title","body":"valid body","agent":"SOVA","map":"invalidMap","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","body":"valid body","agent":"SOVA","map":"invalidMap","userId":2}""", headers),
+                new HttpEntity<>(lineupWithInvalidMapJsonTemplate, headers),
                 String.class
         );
 
-        System.out.println("res is:" + res);
-
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("the map 'invalidMap' is not a valid map");
+        assertThat(res.getBody()).contains("Invalid map");
+        assertThat(res.getBody()).contains("The map 'invalidMap' is not a valid map");
     }
 
     @Test
-    void failOnBlankBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    void failCreateOnBlankBody() {
+        String lineupWithBlankBodyJsonTemplate = """
+                {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"  ","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"  ","userId":2}""", headers),
+                new HttpEntity<>(lineupWithBlankBodyJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("body cannot be blank");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be blank");
     }
 
     @Test
-    void failOnEmptyTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    void failCreateOnEmptyTitle() {
+        String lineupWithEmptyTitleJsonTemplate = """
+                {"title": "","agent":"SOVA","map":"ASCENT","body":"valid body","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title": "","agent":"SOVA","map":"ASCENT","body":"valid body","userId":2}""", headers),
+                new HttpEntity<>(lineupWithEmptyTitleJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).containsIgnoringCase("title cannot be empty");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be empty");
     }
 
     @Test
-    void failOnEmptyBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    void failCreateOnEmptyBody() {
+        String lineupWithEmptyBodyJsonTemplate = """
+                {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"","userId":2}""";
 
         ResponseEntity<String> res = restTemplate.postForEntity(
                 "/api/lineups",
-                new HttpEntity<>("""
-                        {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"","userId":2}""", headers),
+                new HttpEntity<>(lineupWithEmptyBodyJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("body cannot be empty");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be empty");
     }
 
-    // update
-    // valid update
     @Test
     void successfulUpdate() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         Lineup updatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -423,15 +426,21 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNull();
+
+        ResponseEntity<Optional<Lineup>> res2 = restTemplate.exchange(
+                "/api/lineups/1",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Optional<Lineup>>() {
+                }
+        );
+
+        assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res2.getBody().get()).isEqualTo(updatedLineup);
     }
 
-    // invalid update due to bad data; blank, empty null, etc
-    // NB! this end up triggering a "lineup id cannot be altered"
     @Test
-    void failToUpdateNullLineupId() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnNullLineupId() {
         Lineup badUpdatedLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -442,14 +451,12 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(res.getBody()).contains("Lineup id's cannot be altered");
         assertThat(res.getBody()).contains("Cannot change lineup id from '1' to 'null'");
     }
 
     @Test
-    void failToUpdateNullTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnNullTitle() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, null, "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -459,17 +466,13 @@ public class LineupIntegrationTest {
                 String.class
         );
 
-        System.out.println("res is:" + res);
-
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).contains("cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be null");
     }
 
     @Test
-    void failToUpdateNullBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnNullBody() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", null, 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -480,14 +483,12 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).contains("cannot be null");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be null");
     }
 
     @Test
-    void failToUpdateBlankTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnBlankTitle() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "  ", "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -498,14 +499,12 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).contains("title cannot be blank");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be blank");
     }
 
     @Test
-    void failToUpdateBlankBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnBlankBody() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "  ", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -516,14 +515,12 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).contains("body cannot be blank");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be blank");
     }
 
     @Test
-    void failToUpdateEmptyTitle() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnEmptyTitle() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "", "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -534,14 +531,12 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).contains("title cannot be empty");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("title: title cannot be empty");
     }
 
     @Test
-    void failToUpdateEmptyBody() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnEmptyBody() {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -552,54 +547,49 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("body cannot be empty");
+        assertThat(res.getBody()).contains("Invalid data");
+        assertThat(res.getBody()).contains("body: body cannot be empty");
     }
 
     @Test
     void failUpdateOnInvalidAgent() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        // data for the entity we're about to change
-        // (1, 'SOVA', 'ASCENT', 'lineupOne', 'bodyOne', 1),
+        String lineupWithInvalidAgentJsonTemplate = """
+                {"id":1,"title":"valid title","body":"valid body","agent":"INVALIDAGENT","map":"ASCENT","userId":1}""";
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.PUT,
-                new HttpEntity<>("""
-                        {"id":1,"title":"valid title","body":"valid body","agent":"INVALIDAGENT","map":"ASCENT","userId":1}""", headers),
+                new HttpEntity<>(lineupWithInvalidAgentJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).containsIgnoringCase("The agent 'INVALIDAGENT' is not a valid agent");
+        assertThat(res.getBody()).contains("Invalid agent");
+        assertThat(res.getBody()).contains("The agent 'INVALIDAGENT' is not a valid agent");
     }
 
     @Test
     void failUpdateOnInvalidMap() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String lineupWithInvalidMapJsonTemplate = """
+                {"id":1,"title":"valid title","body":"valid body","agent":"BREACH","map":"INVALIDMAP","userId":1}""";
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.PUT,
-                new HttpEntity<>("""
-                        {"id":1,"title":"valid title","body":"valid body","agent":"BREACH","map":"INVALIDMAP","userId":1}""", headers),
+                new HttpEntity<>(lineupWithInvalidMapJsonTemplate, headers),
                 String.class
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).containsIgnoringCase("The map 'INVALIDMAP' is not a valid map");
+        assertThat(res.getBody()).contains("Invalid map");
+        assertThat(res.getBody()).contains("The map 'INVALIDMAP' is not a valid map");
     }
 
     // fail to update due to changed lineupId
     // ex: update lineupId 1 to a lineup with lineupId 200
     // note the user has to be owner of the lineup we're updating
     @Test
-    void failToUpdateDueToChangedId() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
+    void failUpdateOnChangedId() {
         Lineup badUpdatedLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
 
         ResponseEntity<String> res = restTemplate.exchange(
@@ -610,19 +600,15 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody().toString()).containsIgnoringCase("Cannot change lineup id from '1' to '33'");
+        assertThat(res.getBody()).contains("Lineup id's cannot be altered");
+        assertThat(res.getBody()).contains("Cannot change lineup id from '1' to '33'");
     }
 
     // fail to update due to userId not matching user principal (TODO: after auth)
     // ex: a lineup has userId set to 2, user 2 then tries to update the lineup's id to 5
 
-    // delete
-    // successful delete
     @Test
     void successfulDelete() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/2",
                 HttpMethod.DELETE,
@@ -633,7 +619,11 @@ public class LineupIntegrationTest {
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(res.getBody()).isNull();
     }
+
     // unsuccessfully delete TODO: once auth has been impl
+    void failDeleteOnInvalidAuth() {
+    }
+
 
     // CURRENT: check that we serialize the maps and agents correctly
 
@@ -643,5 +633,3 @@ public class LineupIntegrationTest {
     // byMap
     // combination of all of the above "filters"
 }
-
-
