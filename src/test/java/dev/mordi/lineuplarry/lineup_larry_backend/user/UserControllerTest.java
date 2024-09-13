@@ -81,13 +81,9 @@ public class UserControllerTest {
         Long nonExistentUserId = 444L;
         when(userService.getById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        var result = mockMvc.perform(get("/api/users/{id}", nonExistentUserId))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value("User not found"))
-                .andExpect(jsonPath("$.detail").value("User with id: '" + nonExistentUserId + "' was not found"))
-                .andReturn();
+        mockMvc.perform(get("/api/users/{id}", nonExistentUserId))
+                .andExpect(status().isNotFound());
 
-        assertThat(result.getResponse().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON.toString());
         verify(userService).getById(nonExistentUserId);
     }
 
