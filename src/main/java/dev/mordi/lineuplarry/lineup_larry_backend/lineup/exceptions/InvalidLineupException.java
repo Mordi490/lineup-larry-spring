@@ -47,7 +47,6 @@ public class InvalidLineupException extends RuntimeException {
             super("UserId cannot be null");
         }
     }
-    // the only ones we should need are the ones that aren't about null, blank or empty
 
     public static class EmptySearchTitleException extends InvalidLineupException {
         public EmptySearchTitleException(String str) {
@@ -57,7 +56,7 @@ public class InvalidLineupException extends RuntimeException {
 
     public static class BlankSearchTitleException extends InvalidLineupException {
         public BlankSearchTitleException(String str) {
-            super("Cannot search for string '" + str + "', since it's blank");
+            super("Cannot search for string: '" + str + "', since it's blank");
         }
     }
 
@@ -69,13 +68,13 @@ public class InvalidLineupException extends RuntimeException {
 
     public static class InvalidAgentException extends InvalidLineupException {
         public InvalidAgentException(String str) {
-            super("The agent '" + str + "' is not a valid agent");
+            super("The agent: '" + str + "' is not a valid agent");
         }
     }
 
     public static class InvalidMapException extends InvalidLineupException {
         public InvalidMapException(String str) {
-            super("The map '" + str + "' is not a valid map");
+            super("The map: '" + str + "' is not a valid map");
         }
     }
 
@@ -93,7 +92,7 @@ public class InvalidLineupException extends RuntimeException {
 
     public static class ChangedLineupIdException extends InvalidLineupException {
         public ChangedLineupIdException(Long prevId, Long newId) {
-            super("Cannot change lineup id from '" + prevId + "' to '" + newId + "'");
+            super("Cannot change lineup id from: '" + prevId + "' to: '" + newId + "'");
         }
     }
 }

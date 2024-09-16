@@ -251,7 +251,8 @@ public class UserControllerTest {
                             .content(updatedUserJson))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.title").value("UserId is not valid"))
-                    .andExpect(jsonPath("$.detail").value("Id does not match for this user\nExpected " + nonExistentUserId + " but got " + updatedUser.id()))
+                    .andExpect(jsonPath("$.detail").value("Id does not match for this user\nExpected: '"
+                            + nonExistentUserId + "' but got: '" + updatedUser.id() + "'"))
                     .andReturn();
 
             verify(userService).updateUser(nonExistentUserId, updatedUser);

@@ -3,13 +3,14 @@ package dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
 
 public class InvalidUserException extends RuntimeException {
+
     public InvalidUserException(String message) {
         super(message);
     }
 
     public static class IdDoesNotMatchUserException extends InvalidUserException {
         public IdDoesNotMatchUserException(Long id, User user) {
-            super("Id does not match for this user\nExpected " + id + " but got " + user.id());
+            super("Id does not match for this user\nExpected: '" + id + "' but got: '" + user.id() + "'");
         }
     }
 
@@ -28,12 +29,6 @@ public class InvalidUserException extends RuntimeException {
     public static class EmptyUsernameException extends InvalidUserException {
         public EmptyUsernameException() {
             super("Username cannot be empty");
-        }
-    }
-    
-    public static class MissingCreateDataException extends InvalidUserException {
-        public MissingCreateDataException() {
-            super("Required data to create a user is a username with a string");
         }
     }
 

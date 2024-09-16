@@ -223,7 +223,7 @@ public class LineupServiceTest {
 
         assertThatThrownBy(() -> lineupService.updateLineup(2L, randomLineup))
                 .isInstanceOf(InvalidLineupException.ChangedLineupIdException.class)
-                .hasMessage("Cannot change lineup id from '2' to '33'");
+                .hasMessage("Cannot change lineup id from: '2' to: '33'");
     }
 
     // fail updates on same scenarios as creation, blank, empty...

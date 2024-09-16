@@ -177,7 +177,7 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.updateUser(id, userWithMismatchedId))
                 .isInstanceOf(InvalidUserException.IdDoesNotMatchUserException.class)
-                .hasMessage("Id does not match for this user\nExpected " + id + " but got " + userWithMismatchedId.id());
+                .hasMessage("Id does not match for this user\nExpected: '" + id + "' but got: '" + userWithMismatchedId.id() + "'");
 
         verify(userRepository, never()).updateUser(userWithMismatchedId.id(), userWithMismatchedId);
     }

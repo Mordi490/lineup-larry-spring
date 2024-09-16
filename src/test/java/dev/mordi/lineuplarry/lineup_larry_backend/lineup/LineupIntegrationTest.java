@@ -329,7 +329,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Invalid agent");
-        assertThat(res.getBody()).contains("The agent 'invalidAgent' is not a valid agent");
+        assertThat(res.getBody()).contains("The agent: 'invalidAgent' is not a valid agent");
     }
 
     @Test
@@ -362,7 +362,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Invalid map");
-        assertThat(res.getBody()).contains("The map 'invalidMap' is not a valid map");
+        assertThat(res.getBody()).contains("The map: 'invalidMap' is not a valid map");
     }
 
     @Test
@@ -452,7 +452,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Lineup id's cannot be altered");
-        assertThat(res.getBody()).contains("Cannot change lineup id from '1' to 'null'");
+        assertThat(res.getBody()).contains("Cannot change lineup id from: '1' to: 'null'");
     }
 
     @Test
@@ -565,7 +565,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Invalid agent");
-        assertThat(res.getBody()).contains("The agent 'INVALIDAGENT' is not a valid agent");
+        assertThat(res.getBody()).contains("The agent: 'INVALIDAGENT' is not a valid agent");
     }
 
     @Test
@@ -582,7 +582,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Invalid map");
-        assertThat(res.getBody()).contains("The map 'INVALIDMAP' is not a valid map");
+        assertThat(res.getBody()).contains("The map: 'INVALIDMAP' is not a valid map");
     }
 
     // fail to update due to changed lineupId
@@ -601,7 +601,7 @@ public class LineupIntegrationTest {
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(res.getBody()).contains("Lineup id's cannot be altered");
-        assertThat(res.getBody()).contains("Cannot change lineup id from '1' to '33'");
+        assertThat(res.getBody()).contains("Cannot change lineup id from: '1' to: '33'");
     }
 
     // fail to update due to userId not matching user principal (TODO: after auth)
