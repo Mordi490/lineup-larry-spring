@@ -1,6 +1,5 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +33,7 @@ public class UserController {
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getById(id);
         return user.map(ResponseEntity::ok)
-                .orElseThrow(() -> new InvalidUserException.UserNotFoundException(id));
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
