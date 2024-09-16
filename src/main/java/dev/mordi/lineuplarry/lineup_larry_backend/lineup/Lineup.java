@@ -28,7 +28,7 @@ public record Lineup(
         String title,
 
         @NotNull(message = "body cannot be null")
-        @Size(min = 0, max = 200, message = "A body cannot exceed 200 characters")
+        @Size(max = 200, message = "A body cannot exceed {max} characters")
         @NotBlank(message = "body cannot be blank")
         @NotEmpty(message = "body cannot be empty")
         String body,
