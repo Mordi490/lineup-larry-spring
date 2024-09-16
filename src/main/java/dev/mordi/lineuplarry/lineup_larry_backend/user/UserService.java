@@ -52,9 +52,6 @@ public class UserService {
     }
 
     private void validateUsernameForCreate(String username) {
-        if (username == null) {
-            throw new InvalidUserException.MissingCreateDataException();
-        }
         if (username.isEmpty()) {
             throw new InvalidUserException.EmptyUsernameException();
         }

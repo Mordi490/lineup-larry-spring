@@ -39,7 +39,6 @@ public class LineupController {
         }
     }
 
-    // TODO: consider using @RequestParam, might wait till we start with the SPA
     @GetMapping("/{id}")
     public ResponseEntity<Lineup> getById(@PathVariable Long id) {
         Optional<Lineup> lineup = lineupService.getById(id);
