@@ -15,27 +15,16 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.net.URI;
 import java.time.Instant;
 
-// exnteds ResponseEntityExceptionHandler
+// one way of forcing Spring to return ProblemDetail errors
+// extends ResponseEntityExceptionHandler
+// another one is to set "spring.mvc.problemdetails.enabled=true" in app.propertie/yaml
+
 
 @RestControllerAdvice
 public class GlobalExceptionController {
 
     private final String BAD_REQUEST = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400";
     private final String NOT_FOUND = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404";
-
-    // Don't
-    /*
-    // default handler for exceptions
-    @ExceptionHandler(Exception.class)
-    public ProblemDetail handleUnknownGenericError(Exception e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problemDetail.setTitle(e.getCause().toString());
-        problemDetail.setDetail(e.getMessage());
-        problemDetail.setProperty("time", Instant.now());
-        problemDetail.setType(URI.create(BAD_REQUEST));
-        return problemDetail;
-    }
-     */
 
     // Consider redoing this at when opting for Spring's ProblemDetail thingies
     // Generic you gave me bad data pd
@@ -88,15 +77,6 @@ public class GlobalExceptionController {
         return problemDetail;
     }
 
-    @ExceptionHandler(InvalidUserException.MissingCreateDataException.class)
-    public ProblemDetail MissingCreateDataException(InvalidUserException.MissingCreateDataException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-        problemDetail.setTitle("Invalid data to create user");
-        problemDetail.setProperty("time", Instant.now());
-        problemDetail.setType(URI.create(BAD_REQUEST));
-        return problemDetail;
-    }
-
     @ExceptionHandler(InvalidLineupException.ChangedLineupIdException.class)
     public ProblemDetail handleChangedLineupIdException(InvalidLineupException.ChangedLineupIdException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -116,7 +96,7 @@ public class GlobalExceptionController {
     }
 
     // NB! this is different from the one above!
-    // may get invoked when fetching all lineups given a user's id
+    // Invoked when fetching all lineups from a nonexistent user
     @ExceptionHandler(InvalidLineupException.NoUserException.class)
     public ProblemDetail handleNoUserExceptionException(InvalidLineupException.NoUserException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
@@ -153,8 +133,10 @@ public class GlobalExceptionController {
         return problemDetail;
     }
 
+
+    // feels bad to overwrite
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidationExceptions(MethodArgumentNotValidException e) {
+    public ProblemDetail handleValidationException(MethodArgumentNotValidException e) {
         // Collect validation errors
         StringBuilder detailBuilder = new StringBuilder();
         e.getBindingResult().getAllErrors().forEach((error) -> {
@@ -171,8 +153,8 @@ public class GlobalExceptionController {
         // Create ProblemDetails object
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detailBuilder.toString());
         problemDetail.setTitle("Invalid data");
-        problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(BAD_REQUEST));
+        problemDetail.setProperty("time", Instant.now());
 
         return problemDetail;
     }
