@@ -1,17 +1,18 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-
 @RestController
 @RequestMapping("/api/lineups")
+@Validated
 public class LineupController {
 
     LineupService lineupService;
@@ -26,17 +27,17 @@ public class LineupController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Lineup>> getLineups(@RequestParam(required = false) String title) {
-        // exhaustive switch statement maybe
-        if (title != null) {
-            // If the title is provided, search by title
-            List<Lineup> lineups = lineupService.getByTitle(title).orElse(Collections.emptyList());
-            return new ResponseEntity<>(lineups, HttpStatus.OK);
-        } else {
-            // If the title is not provided, return all lineups
-            List<Lineup> allLineups = lineupService.getAll();
-            return new ResponseEntity<>(allLineups, HttpStatus.OK);
-        }
+    public ResponseEntity<List<Lineup>> getLineups(
+            @RequestParam(required = false)
+            @Size(min = 3, max = 40, message = "Title must be between {min} and {max} characters")
+            String title,
+            // maybe consider custom validations
+            @RequestParam(required = false)
+            String agent,
+            @RequestParam(required = false)
+            String map) {
+        List<Lineup> allLineups = lineupService.getAll(title, agent, map);
+        return new ResponseEntity<>(allLineups, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
