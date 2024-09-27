@@ -16,6 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,21 +92,7 @@ public class LineupIntegrationTest {
         assertThat(res.getBody().stream().toList()).isEqualTo(expectedArray);
     }
 
-    @Test
-    void successfulSearchByTitleWithNoMatches() {
-        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
-                "/api/lineups?title=this+will+not+give+any+results",
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<>() {
-                }
-        );
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(0);
-    }
-
+    // Reconsider if this is even a good practice
     @Test
     void failGetByTitleOnBlankSearchTitle() {
         ResponseEntity<String> response = restTemplate.exchange(
@@ -116,8 +103,8 @@ public class LineupIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("Search title cannot be blank");
-        assertThat(response.getBody()).contains("Cannot search for string: '    ', since it's blank");
+        assertThat(response.getBody()).contains("Invalid search title");
+        assertThat(response.getBody()).contains("Lineup title cannot be blank");
     }
 
     @Test
@@ -130,8 +117,8 @@ public class LineupIntegrationTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("Search title cannot be empty");
-        assertThat(response.getBody()).contains("Cannot search for string: '', since it's empty");
+        assertThat(response.getBody()).contains("Invalid value");
+        assertThat(response.getBody()).contains("Title must be between 3 and 40 characters");
     }
 
     // getByID
@@ -205,7 +192,7 @@ public class LineupIntegrationTest {
     }
 
     @Test
-    void failGetALlLineupsFromUserWithInvalidUserId() throws Exception {
+    void failGetALlLineupsFromUserWithInvalidUserId() {
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/user/999",
                 HttpMethod.GET,
@@ -230,6 +217,7 @@ public class LineupIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().id()).isNotNull();
         // sequence has been set to start of at 101, to give headroom for seed data, only applies to "dev"-env
         assertThat(res.getBody().id()).isEqualTo(101);
@@ -625,8 +613,206 @@ public class LineupIntegrationTest {
     }
 
 
-    // CURRENT: check that we serialize the maps and agents correctly
+    @Test
+    void getAllSovaLineups() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=sova",
+                HttpMethod.GET,
+                new HttpEntity<>(null, headers),
+                new ParameterizedTypeReference<>() {
+                }
+        );
 
+        List<Lineup> expectedResult = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().stream().toList()).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void failGetAllLineupsOnInvalidAgent() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?agent=notARealAgent",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("The agent: 'notARealAgent' is not a valid agent");
+    }
+
+    @Test
+    void getAllSunsetLineups() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=sunset",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().stream().toList()).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void failGetAllLineupsFromAnInvalidMap() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?map=thisIsNotAMap",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("The map: 'thisIsNotAMap' is not a valid map");
+    }
+
+    @Test
+    void getAllLineupsFromMapThatDoesNotHaveAnyLineups() { // 10/10 naming yerp
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?map=pearl",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("""
+                []"""); // empty list
+    }
+
+    @Test
+    void getAllLineupsFromAgentWithoutLineups() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?agent=jett",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("""
+                []"""); // empty list
+    }
+
+    @Test
+    void getAllLineupsFromAgentAndMapWithNoMatches() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?map=pearl&agent=jett",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("""
+                []"""); // empty list
+    }
+
+    // in the event both agent and map are invalid the agent should err first
+    @Test
+    void getAllLineupsOnInvalidAgentAndMap() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?agent=NotJett&map=notAscent",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("The agent: 'NotJett' is not a valid agent");
+    }
+
+    @Test
+    void getAllLineupsFromAgentMapAndTitleWithNoMatches() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=pearl&agent=jett&title=nope",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().stream().toList()).isEqualTo(Collections.EMPTY_LIST);
+    }
+
+    @Test
+    void getAllSovaLineupsOnAscent() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=sova&map=ascent",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedLineups = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().stream().toList()).isEqualTo(expectedLineups);
+    }
+
+    @Test
+    void getAllLineupByAgentMapAndTitle() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=brimstone&map=bind&title=lineupThree",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedLineup = List.of(
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().stream().toList()).isEqualTo(expectedLineup);
+    }
+
+    @Test
+    void getAllLineupByAgentMapAndTitleInvalidAgent() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?agent=brimmystonero&map=bind&title=lineupThree",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("The agent: 'brimmystonero' is not a valid agent");
+    }
+
+    @Test
+    void getAllLineupByAgentMapAndTitleInvalidMap() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups?agent=brimstone&map=bindersToBeBinding&title=lineupThree",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("The map: 'bindersToBeBinding' is not a valid map");
+    }
 
     // getByAuthor
     // byAgent
