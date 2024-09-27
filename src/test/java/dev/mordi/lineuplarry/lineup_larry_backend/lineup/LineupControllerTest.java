@@ -66,7 +66,7 @@ public class LineupControllerTest {
     // getAll
     @Test
     void successfulGetAll() throws Exception {
-        when(lineupService.getAll()).thenReturn(Arrays.asList(lineupOne, lineupTwo));
+        when(lineupService.getAll(null, null, null)).thenReturn(Arrays.asList(lineupOne, lineupTwo));
 
         MvcResult result = mockMvc.perform(get("/api/lineups"))
                 .andExpect(status().isOk())
@@ -75,7 +75,7 @@ public class LineupControllerTest {
 
         assertThat(result.getResponse().getContentType()).isEqualToIgnoringCase(MediaType.APPLICATION_JSON.toString());
         assertThat(result.getResponse().getContentAsString()).contains(lineupOne.title(), lineupTwo.title());
-        verify(lineupService).getAll();
+        verify(lineupService).getAll(null, null, null);
     }
 
     // getById
@@ -353,24 +353,24 @@ public class LineupControllerTest {
     // lineupId's 4 and 5 have the tile: "same name"
     @Test
     void successfulGetByTitle() {
-        Optional<List<Lineup>> mockedResult = Optional.of(Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne));
+        List<Lineup> mockedResult = Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne);
         when(lineupService.getByTitle("lineup title")).thenReturn(mockedResult);
 
-        Optional<List<Lineup>> lineups = lineupService.getByTitle("lineup title");
+        List<Lineup> lineups = lineupService.getByTitle("lineup title");
 
-        assertThat(lineups).isPresent();
-        assertThat(lineups.get().size()).isEqualTo(2);
+        assertThat(lineups).isNotNull();
+        assertThat(lineups.size()).isEqualTo(2);
         verify(lineupService).getByTitle("lineup title");
     }
 
     @Test
     void successfulGetByTitleNoMatches() {
-        Optional<List<Lineup>> mockedResult = Optional.empty();
+        List<Lineup> mockedResult = List.of();
         when(lineupService.getByTitle("bad search title")).thenReturn(mockedResult);
 
-        var lineups = lineupService.getByTitle("bad search title");
+        List<Lineup> lineups = lineupService.getByTitle("bad search title");
 
-        assertThat(lineups).isEmpty();
+        assertThat(lineups.toArray()).isEmpty();
     }
 
     @Test
