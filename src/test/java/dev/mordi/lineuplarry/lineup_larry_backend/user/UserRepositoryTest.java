@@ -54,11 +54,6 @@ public class UserRepositoryTest {
         Optional<User> user = userRepository.getUserById(22L);
 
         assertThat(user).isEmpty();
-        /*
-        assertThrows(InvalidLineupException.NoUserException.class, () -> {
-            userRepository.getUserById(22L);
-        });
-         */
     }
 
     @Test
@@ -98,17 +93,10 @@ public class UserRepositoryTest {
 
         userRepository.deleteUser(4L);
 
-        // prev
-        /*
-        assertThrows(InvalidLineupException.NoUserException.class, () -> {
-            userRepository.getUserById(4L);
-        });
-         */
         Optional<User> reFetchedUser = userRepository.getUserById(4L);
         assertThat(reFetchedUser).isEmpty();
     }
 
-    // TODO: revisit if this is the most common way to go about this
     @Test
     void failDeleteForNonExistingUser() {
         assertThrows(InvalidUserException.UserNotFoundException.class, () -> {
