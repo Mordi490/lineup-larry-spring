@@ -3,6 +3,7 @@ package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -212,6 +213,24 @@ public class GlobalExceptionController {
     public ProblemDetail handleInvalidMapException(InvalidLineupException.InvalidMapException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
         problemDetail.setTitle("Invalid map");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolationException(ConstraintViolationException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+        problemDetail.setTitle("Invalid value");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvalidLineupException.BlankTitleException.class)
+    public ProblemDetail handleBlankSearchTitleException(InvalidLineupException.BlankTitleException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+        problemDetail.setTitle("Invalid search title");
         problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(BAD_REQUEST));
         return problemDetail;

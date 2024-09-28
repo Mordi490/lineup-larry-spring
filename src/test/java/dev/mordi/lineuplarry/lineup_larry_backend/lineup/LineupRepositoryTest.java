@@ -13,6 +13,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,7 +95,6 @@ public class LineupRepositoryTest {
     // TODO: revisit this once security has been
     // ie. fail because the user's provided principal does not match with the set userId
 
-    
     // Update
     // success
     @Test
@@ -187,17 +187,29 @@ public class LineupRepositoryTest {
     // testing "getByTitle", lineupId: 4 & 5 share the same title, 'same name'.
     @Test
     void successfulGetByTitle() {
-        Optional<List<Lineup>> lineups = lineupRepository.getByTitle("same name");
+        List<Lineup> lineups = lineupRepository.getByTitle("same name");
 
-        assertThat(lineups).isPresent();
-        assertThat(lineups.get().size()).isEqualTo(2);
+        assertThat(lineups).isNotEmpty();
+        assertThat(lineups.size()).isEqualTo(2);
     }
 
     // return for zero finds
     @Test
     void successfulGetByTitleNoMatches() {
-        Optional<List<Lineup>> lineups = lineupRepository.getByTitle("this title will most definitely not result in any lineups being fetched");
+        List<Lineup> lineups = lineupRepository.getByTitle("this title will most definitely not result in any lineups being fetched");
 
         assertThat(lineups).isEmpty();
+    }
+
+    @Test
+    void successfulGetByAgentMapAndTitle() {
+        List<Lineup> lineups = lineupRepository.findByAgentAndMapAndTitle(Agent.BRIMSTONE, Map.BIND, "lineupThree");
+
+        List<Lineup> expectedLineup = Collections.singletonList(
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
+        );
+
+        assertThat(lineups).isNotEmpty();
+        assertThat(lineups).isEqualTo(expectedLineup);
     }
 }

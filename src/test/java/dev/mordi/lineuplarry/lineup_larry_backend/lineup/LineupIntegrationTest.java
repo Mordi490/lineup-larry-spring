@@ -770,6 +770,43 @@ public class LineupIntegrationTest {
     }
 
     @Test
+    void getAllAscentMapsWithSpecificTitle() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent&title=lineupTwo",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void getAllSovaLineupsWithSpecificTitle() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=sova&title=lineupTwo",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = Collections.singletonList(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
     void getAllLineupByAgentMapAndTitle() {
         ResponseEntity<List<Lineup>> response = restTemplate.exchange(
                 "/api/lineups?agent=brimstone&map=bind&title=lineupThree",

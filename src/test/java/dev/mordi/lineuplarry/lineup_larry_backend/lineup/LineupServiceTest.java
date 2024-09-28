@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,22 +54,99 @@ public class LineupServiceTest {
         List<Lineup> allLineups = Arrays.asList(lineupOne, lineupTwo, lineupThree, lineupFour, lineupFive);
         when(lineupRepository.findAllLineups()).thenReturn(allLineups);
 
-        List<Lineup> result = lineupService.getAll();
+        List<Lineup> result = lineupService.getAll(null, null, null);
 
         assertThat(result).isEqualTo(allLineups);
         verify(lineupRepository).findAllLineups();
     }
 
     @Test
-    void getAllAfterRemovalOfLineup() {
-        List<Lineup> allLineupsMinusOne = Arrays.asList(lineupOne, lineupTwo);
-        when(lineupRepository.findAllLineups()).thenReturn(allLineupsMinusOne);
+    void getAllFilteredByAgent() {
+        List<Lineup> allSovaLineups = Arrays.asList(lineupOne, lineupTwo);
+        when(lineupRepository.findByAgent(Agent.SOVA)).thenReturn(allSovaLineups);
 
-        List<Lineup> result = lineupService.getAll();
-        List<Lineup> resultMinusOne = result.subList(0, result.size());
+        List<Lineup> result = lineupService.getAll(null, "sova", null);
 
-        assertThat(resultMinusOne).isEqualTo(allLineupsMinusOne);
-        verify(lineupRepository).findAllLineups();
+        assertThat(result).isEqualTo(allSovaLineups);
+        verify(lineupRepository).findByAgent(Agent.SOVA);
+    }
+
+    @Test
+    void getAllFilterByMap() {
+        List<Lineup> allAscentLineups = Arrays.asList(lineupOne, lineupTwo);
+        when(lineupRepository.findByMap(Map.ASCENT)).thenReturn(allAscentLineups);
+
+        List<Lineup> result = lineupService.getAll(null, null, "ascent");
+
+        assertThat(result).isEqualTo(allAscentLineups);
+        verify(lineupRepository).findByMap(Map.ASCENT);
+    }
+
+    @Test
+    void getAllFilterByTitle() {
+        List<Lineup> sameNameLineups = Arrays.asList(lineupFour, lineupFive);
+        when(lineupRepository.getByTitle("same name")).thenReturn(sameNameLineups);
+
+        List<Lineup> result = lineupService.getByTitle("same name");
+
+        assertThat(result).isEqualTo(sameNameLineups);
+        verify(lineupRepository).getByTitle("same name");
+    }
+
+    @Test
+    void getAllFilterByAgentAndMap() {
+        List<Lineup> cypherOnSunset = Collections.singletonList(lineupFour);
+        when(lineupRepository.findByAgentAndMap(Agent.CYPHER, Map.SUNSET)).thenReturn(cypherOnSunset);
+
+        List<Lineup> result = lineupService.getAll(null, "cypher", "sunset");
+
+        assertThat(result).isEqualTo(cypherOnSunset);
+        verify(lineupRepository).findByAgentAndMap(Agent.CYPHER, Map.SUNSET);
+    }
+
+    @Test
+    void getAllFilterByAgentAndMapAndTitle() {
+        List<Lineup> cypherOnSunsetSameNameTitle = Collections.singletonList(lineupFour);
+        when(lineupRepository.findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name")).thenReturn(cypherOnSunsetSameNameTitle);
+
+        List<Lineup> result = lineupService.getAll("same name", "cypher", "sunset");
+
+        assertThat(result).isEqualTo(cypherOnSunsetSameNameTitle);
+        verify(lineupRepository).findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name");
+    }
+
+    @Test
+    void failGetAllFilterByAgentInvalidAgentString() {
+        assertThatThrownBy(() -> lineupService.getAll(null, "notJett", null))
+                .isInstanceOf(InvalidLineupException.InvalidAgentException.class)
+                .hasMessage("The agent: 'notJett' is not a valid agent");
+
+        verify(lineupRepository, never()).findByAgent(Agent.BRIMSTONE);
+    }
+
+    @Test
+    void failGetAllFilterByMapInvalidMapString() {
+        assertThatThrownBy(() -> lineupService.getAll(null, null, "notAMap"))
+                .isInstanceOf(InvalidLineupException.InvalidMapException.class)
+                .hasMessage("The map: 'notAMap' is not a valid map");
+
+        verify(lineupRepository, never()).findByMap(Map.ASCENT);
+    }
+
+    @Test
+    void failGetAllFilterByAgentAndMapInvalidStrings() {
+        assertThatThrownBy(() -> lineupService.getAll(null, "notJett", "notAMap"))
+                .isInstanceOf(InvalidLineupException.InvalidAgentException.class) // agent fails first
+                .hasMessage("The agent: 'notJett' is not a valid agent");
+
+        verify(lineupRepository, never()).findByAgentAndMap(Agent.JETT, Map.ASCENT);
+    }
+
+    @Test
+    void GetAllFilterByTitleNoMatches() {
+        var res = lineupService.getAll("not gonna get a match", null, null);
+
+        assertThat(res.stream().toList()).isEqualTo(Collections.EMPTY_LIST);
     }
 
     // getLineupById

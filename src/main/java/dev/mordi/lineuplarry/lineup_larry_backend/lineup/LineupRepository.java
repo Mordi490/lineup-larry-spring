@@ -1,5 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
@@ -97,13 +99,53 @@ public class LineupRepository {
         return Optional.of(lineups);
     }
 
-    public Optional<List<Lineup>> getByTitle(String name) {
-        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+    // there should be some fuzzy search on titles and authorNames
+    public List<Lineup> getByTitle(String name) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.TITLE.eq(name))
-                .fetch()
-                .map(mapping(Lineup::new));
+                .fetchInto(Lineup.class);
+    }
 
-        return lineups.isEmpty() ? Optional.empty() : Optional.of(lineups);
+    public List<Lineup> findByAgent(Agent validatedAgent) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.AGENT.eq(validatedAgent))
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndTitle(Agent validatedAgent, String title) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByMapAndTitle(Map validatedMap, String title) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap).and(LINEUP.TITLE.eq(title)))
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByMap(Map validatedMap) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap))
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndMap(Agent validatedAgent, Map validatedMap) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent))
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndMapAndTitle(Agent validatedAgent, Map validatedMap, String title) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .fetchInto(Lineup.class);
     }
 }

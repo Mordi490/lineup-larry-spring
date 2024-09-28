@@ -1,5 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +17,29 @@ public class LineupService {
         this.lineupRepository = lineupRepository;
     }
 
-    public List<Lineup> getAll() {
-        return lineupRepository.findAllLineups();
+    // This should not be this ugly
+    public List<Lineup> getAll(String title, String agent, String map) {
+        validateTitle(title);
+        Agent validatedAgent = validateAgent(agent);
+        Map validatedMap = validateMap(map);
+
+        if (title != null && validatedAgent == null && validatedMap == null) {
+            return lineupRepository.getByTitle(title);
+        } else if (title == null && validatedAgent != null && validatedMap == null) {
+            return lineupRepository.findByAgent(validatedAgent);
+        } else if (title == null && validatedAgent == null && validatedMap != null) {
+            return lineupRepository.findByMap(validatedMap);
+        } else if (title == null && validatedAgent != null && validatedMap != null) {
+            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap);
+        } else if (title != null && validatedAgent == null && validatedMap != null) {
+            return lineupRepository.findByMapAndTitle(validatedMap, title);
+        } else if (title != null && validatedAgent != null && validatedMap == null) {
+            return lineupRepository.findByAgentAndTitle(validatedAgent, title);
+        } else if (title != null && validatedAgent != null && validatedMap != null) {
+            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title);
+        } else {
+            return lineupRepository.findAllLineups();
+        }
     }
 
     public Optional<Lineup> getById(Long id) {
@@ -27,7 +50,7 @@ public class LineupService {
         return lineupRepository.getLineupsByUserId(id);
     }
 
-    public Optional<List<Lineup>> getByTitle(String name) {
+    public List<Lineup> getByTitle(String name) {
         validateGetByTitleString(name);
         return lineupRepository.getByTitle(name);
     }
@@ -120,6 +143,34 @@ public class LineupService {
         }
         if (lineupToUpdate.body().isBlank()) {
             throw new InvalidLineupException.BlankBodyException();
+        }
+    }
+
+    private void validateTitle(String title) {
+        if (title != null && title.isBlank()) {
+            throw new InvalidLineupException.BlankTitleException();
+        }
+    }
+
+    private Agent validateAgent(String agent) {
+        if (agent == null) {
+            return null;
+        }
+        try {
+            return Agent.valueOf(agent.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidLineupException.InvalidAgentException(agent);
+        }
+    }
+
+    private Map validateMap(String map) {
+        if (map == null) {
+            return null;
+        }
+        try {
+            return Map.valueOf(map.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidLineupException.InvalidMapException(map);
         }
     }
 }
