@@ -128,7 +128,7 @@
                         <configuration>
                             <database>
                                 <type>POSTGRES</type>
-                                <containerImage>postgres:16.3-alpine
+                                <containerImage>postgres:17-alpine
                                 </containerImage>
                             </database>
                             <flyway>
