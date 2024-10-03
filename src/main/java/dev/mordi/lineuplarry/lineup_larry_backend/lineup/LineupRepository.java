@@ -83,7 +83,7 @@ public class LineupRepository {
     }
 
     // fetches all the lineups from a given user
-    public Optional<List<Lineup>> getLineupsByUserId(Long id) {
+    public Optional<List<Lineup>> getLineupsByUserId(Long id, Long pageSize) {
         boolean exists = doesUserExist(id, false);
 
         if (!exists) {
@@ -93,6 +93,27 @@ public class LineupRepository {
         List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.USER_ID.eq(id))
+                .orderBy(LINEUP.ID.asc())
+                .limit(pageSize)
+                .fetch()
+                .map(mapping(Lineup::new));
+
+        return Optional.of(lineups);
+    }
+
+    public Optional<List<Lineup>> getLineupsByUserIdSeek(Long id, Long pageSize, long lastValue) {
+        boolean exists = doesUserExist(id, false);
+
+        if (!exists) {
+            throw new InvalidLineupException.NoUserException(id);
+        }
+
+        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.USER_ID.eq(id))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
                 .fetch()
                 .map(mapping(Lineup::new));
 
@@ -100,52 +121,147 @@ public class LineupRepository {
     }
 
     // there should be some fuzzy search on titles and authorNames
-    public List<Lineup> getByTitle(String name) {
+    public List<Lineup> getByTitle(String name, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.TITLE.eq(name))
+                .orderBy(LINEUP.ID.asc())
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByAgent(Agent validatedAgent) {
+    public List<Lineup> getByTitlePagination(String name, Long pageSize, Long lastValue) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
-                .where(LINEUP.AGENT.eq(validatedAgent))
+                .where(LINEUP.TITLE.eq(name))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByAgentAndTitle(Agent validatedAgent, String title) {
+    public List<Lineup> findByAgentAndTitle(Agent validatedAgent, String title, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByMapAndTitle(Map validatedMap, String title) {
+    public List<Lineup> findByAgentAndTitlePaginated(Agent validatedAgent, String title, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByMapAndTitle(Map validatedMap, String title, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.MAP.eq(validatedMap).and(LINEUP.TITLE.eq(title)))
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByMap(Map validatedMap) {
+    public List<Lineup> findByMapAndTitlePaginated(Map validatedMap, String title, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap).and(LINEUP.TITLE.eq(title)))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByMap(Map validatedMap, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.MAP.eq(validatedMap))
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByAgentAndMap(Agent validatedAgent, Map validatedMap) {
+    public List<Lineup> findByMapPaginated(Map validatedMap, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndMap(Agent validatedAgent, Map validatedMap, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent))
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 
-    public List<Lineup> findByAgentAndMapAndTitle(Agent validatedAgent, Map validatedMap, String title) {
+    public List<Lineup> findByAgentAndMapPaginated(Agent validatedAgent, Map validatedMap, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndMapAndTitle(Agent validatedAgent, Map validatedMap, String title, Long pageSize) {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
                 .from(LINEUP)
                 .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentAndMapAndTitlePaginated(Agent validatedAgent, Map validatedMap, String title, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.MAP.eq(validatedMap)).and(LINEUP.AGENT.eq(validatedAgent).and(LINEUP.TITLE.eq(title)))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgent(Agent validatedAgent, Long pageSize) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.AGENT.eq(validatedAgent))
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> findByAgentPaginated(Agent agent, Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .where(LINEUP.AGENT.eq(agent))
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> getAllLineups(Long pageSize) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .orderBy(LINEUP.ID.asc())
+                .limit(pageSize)
+                .fetchInto(Lineup.class);
+    }
+
+    public List<Lineup> getAllLineupsPaginated(Long pageSize, Long lastValue) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+                .from(LINEUP)
+                .orderBy(LINEUP.ID.asc())
+                .seek(lastValue)
+                .limit(pageSize)
                 .fetchInto(Lineup.class);
     }
 }

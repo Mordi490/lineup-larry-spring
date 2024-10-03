@@ -49,102 +49,103 @@ public class LineupServiceTest {
         lineupFive = new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree", 1L);
     }
 
+    // Do I ever want this?
     @Test
-    void getAll() {
+    void getAllLineup() {
         List<Lineup> allLineups = Arrays.asList(lineupOne, lineupTwo, lineupThree, lineupFour, lineupFive);
-        when(lineupRepository.findAllLineups()).thenReturn(allLineups);
+        when(lineupRepository.getAllLineups(20L)).thenReturn(allLineups);
 
-        List<Lineup> result = lineupService.getAll(null, null, null);
+        List<Lineup> result = lineupService.getLineup(null, null, null, 20L, null);
 
         assertThat(result).isEqualTo(allLineups);
-        verify(lineupRepository).findAllLineups();
+        verify(lineupRepository).getAllLineups(20L);
     }
 
     @Test
-    void getAllFilteredByAgent() {
+    void getAllLineupFilteredByAgent() {
         List<Lineup> allSovaLineups = Arrays.asList(lineupOne, lineupTwo);
-        when(lineupRepository.findByAgent(Agent.SOVA)).thenReturn(allSovaLineups);
+        when(lineupRepository.findByAgent(Agent.SOVA, 20L)).thenReturn(allSovaLineups);
 
-        List<Lineup> result = lineupService.getAll(null, "sova", null);
+        List<Lineup> result = lineupService.getLineup(null, "sova", null, 20L, null);
 
         assertThat(result).isEqualTo(allSovaLineups);
-        verify(lineupRepository).findByAgent(Agent.SOVA);
+        verify(lineupRepository).findByAgent(Agent.SOVA, 20L);
     }
 
     @Test
-    void getAllFilterByMap() {
+    void getLineupFilterByMap() {
         List<Lineup> allAscentLineups = Arrays.asList(lineupOne, lineupTwo);
-        when(lineupRepository.findByMap(Map.ASCENT)).thenReturn(allAscentLineups);
+        when(lineupRepository.findByMap(Map.ASCENT, 20L)).thenReturn(allAscentLineups);
 
-        List<Lineup> result = lineupService.getAll(null, null, "ascent");
+        List<Lineup> result = lineupService.getLineup(null, null, "ascent", 20L, null);
 
         assertThat(result).isEqualTo(allAscentLineups);
-        verify(lineupRepository).findByMap(Map.ASCENT);
+        verify(lineupRepository).findByMap(Map.ASCENT, 20L);
     }
 
     @Test
-    void getAllFilterByTitle() {
+    void getLineupFilterByTitle() {
         List<Lineup> sameNameLineups = Arrays.asList(lineupFour, lineupFive);
-        when(lineupRepository.getByTitle("same name")).thenReturn(sameNameLineups);
+        when(lineupRepository.getByTitle("same name", 20L)).thenReturn(sameNameLineups);
 
-        List<Lineup> result = lineupService.getByTitle("same name");
+        List<Lineup> result = lineupService.getByTitle("same name", 20L);
 
         assertThat(result).isEqualTo(sameNameLineups);
-        verify(lineupRepository).getByTitle("same name");
+        verify(lineupRepository).getByTitle("same name", 20L);
     }
 
     @Test
-    void getAllFilterByAgentAndMap() {
+    void getLineupFilterByAgentAndMap() {
         List<Lineup> cypherOnSunset = Collections.singletonList(lineupFour);
-        when(lineupRepository.findByAgentAndMap(Agent.CYPHER, Map.SUNSET)).thenReturn(cypherOnSunset);
+        when(lineupRepository.findByAgentAndMap(Agent.CYPHER, Map.SUNSET, 20L)).thenReturn(cypherOnSunset);
 
-        List<Lineup> result = lineupService.getAll(null, "cypher", "sunset");
+        List<Lineup> result = lineupService.getLineup(null, "cypher", "sunset", 20L, null);
 
         assertThat(result).isEqualTo(cypherOnSunset);
-        verify(lineupRepository).findByAgentAndMap(Agent.CYPHER, Map.SUNSET);
+        verify(lineupRepository).findByAgentAndMap(Agent.CYPHER, Map.SUNSET, 20L);
     }
 
     @Test
-    void getAllFilterByAgentAndMapAndTitle() {
+    void getLineupFilterByAgentAndMapAndTitle() {
         List<Lineup> cypherOnSunsetSameNameTitle = Collections.singletonList(lineupFour);
-        when(lineupRepository.findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name")).thenReturn(cypherOnSunsetSameNameTitle);
+        when(lineupRepository.findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name", 20L)).thenReturn(cypherOnSunsetSameNameTitle);
 
-        List<Lineup> result = lineupService.getAll("same name", "cypher", "sunset");
+        List<Lineup> result = lineupService.getLineup("same name", "cypher", "sunset", 20L, null);
 
         assertThat(result).isEqualTo(cypherOnSunsetSameNameTitle);
-        verify(lineupRepository).findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name");
+        verify(lineupRepository).findByAgentAndMapAndTitle(Agent.CYPHER, Map.SUNSET, "same name", 20L);
     }
 
     @Test
-    void failGetAllFilterByAgentInvalidAgentString() {
-        assertThatThrownBy(() -> lineupService.getAll(null, "notJett", null))
+    void failGetLineupFilterByAgentInvalidAgentString() {
+        assertThatThrownBy(() -> lineupService.getLineup(null, "notJett", null, 20L, null))
                 .isInstanceOf(InvalidLineupException.InvalidAgentException.class)
                 .hasMessage("The agent: 'notJett' is not a valid agent");
 
-        verify(lineupRepository, never()).findByAgent(Agent.BRIMSTONE);
+        verify(lineupRepository, never()).findByAgent(Agent.BRIMSTONE, 20L);
     }
 
     @Test
-    void failGetAllFilterByMapInvalidMapString() {
-        assertThatThrownBy(() -> lineupService.getAll(null, null, "notAMap"))
+    void failGetLineupFilterByMapInvalidMapString() {
+        assertThatThrownBy(() -> lineupService.getLineup(null, null, "notAMap", 20L, null))
                 .isInstanceOf(InvalidLineupException.InvalidMapException.class)
                 .hasMessage("The map: 'notAMap' is not a valid map");
 
-        verify(lineupRepository, never()).findByMap(Map.ASCENT);
+        verify(lineupRepository, never()).findByMap(Map.ASCENT, 20L);
     }
 
     @Test
-    void failGetAllFilterByAgentAndMapInvalidStrings() {
-        assertThatThrownBy(() -> lineupService.getAll(null, "notJett", "notAMap"))
+    void failGetLineupFilterByAgentAndMapInvalidStrings() {
+        assertThatThrownBy(() -> lineupService.getLineup(null, "notJett", "notAMap", 20L, null))
                 .isInstanceOf(InvalidLineupException.InvalidAgentException.class) // agent fails first
                 .hasMessage("The agent: 'notJett' is not a valid agent");
 
-        verify(lineupRepository, never()).findByAgentAndMap(Agent.JETT, Map.ASCENT);
+        verify(lineupRepository, never()).findByAgentAndMap(Agent.JETT, Map.ASCENT, 20L);
     }
 
     @Test
-    void GetAllFilterByTitleNoMatches() {
-        var res = lineupService.getAll("not gonna get a match", null, null);
+    void GetLineupFilterByTitleNoMatches() {
+        var res = lineupService.getLineup("not gonna get a match", null, null, 20L, null);
 
         assertThat(res.stream().toList()).isEqualTo(Collections.EMPTY_LIST);
     }
@@ -177,41 +178,41 @@ public class LineupServiceTest {
 
     // get all lineups from user
     @Test
-    void successfulGetAllLineupsFromUserWithLineups() {
+    void successfulGetLineupLineupsFromUserWithLineups() {
         Optional<List<Lineup>> allLineupsFromUserOne = Optional.of(Arrays.asList(lineupOne, lineupTwo, lineupThree));
-        when(lineupRepository.getLineupsByUserId(1L)).thenReturn(allLineupsFromUserOne);
+        when(lineupRepository.getLineupsByUserId(1L, 20L)).thenReturn(allLineupsFromUserOne);
 
-        Optional<List<Lineup>> fetchedLineupsFromUser = lineupService.getAllLineupsFromUserId(1L);
+        Optional<List<Lineup>> fetchedLineupsFromUser = lineupService.getAllLineupsFromUserId(1L, 20L, null);
 
         assertThat(fetchedLineupsFromUser).isPresent();
         assertThat(fetchedLineupsFromUser.get().size()).isEqualTo(3);
         assertThat(fetchedLineupsFromUser.get()).isEqualTo(allLineupsFromUserOne.get());
-        verify(lineupRepository).getLineupsByUserId(1L);
+        verify(lineupRepository).getLineupsByUserId(1L, 20L);
     }
 
     @Test
-    void successfulGetAllLineupsFromUserWithNoLineups() {
+    void successfulGetLineupLineupsFromUserWithNoLineups() {
         Optional<List<Lineup>> emptyList = Optional.empty();
         Long userId = 2L;
-        when(lineupRepository.getLineupsByUserId(userId)).thenReturn(emptyList);
+        when(lineupRepository.getLineupsByUserId(userId, 20L)).thenReturn(emptyList);
 
-        Optional<List<Lineup>> fetchedList = lineupService.getAllLineupsFromUserId(userId);
+        Optional<List<Lineup>> fetchedList = lineupService.getAllLineupsFromUserId(userId, 20L, null);
 
         assertThat(fetchedList).isEmpty();
-        verify(lineupRepository).getLineupsByUserId(userId);
+        verify(lineupRepository).getLineupsByUserId(userId, 20L);
     }
 
     @Test
-    void getAllLineupsFromNonexistentUser() {
+    void getLineupLineupsFromNonexistentUser() {
         Long nonexistentUserId = 999L;
         InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(nonexistentUserId);
-        when(lineupRepository.getLineupsByUserId(nonexistentUserId)).thenThrow(exception);
+        when(lineupRepository.getLineupsByUserId(nonexistentUserId, 20L)).thenThrow(exception);
 
-        assertThatThrownBy(() -> lineupService.getAllLineupsFromUserId(nonexistentUserId))
+        assertThatThrownBy(() -> lineupService.getAllLineupsFromUserId(nonexistentUserId, 20L, null))
                 .isInstanceOf(InvalidLineupException.NoUserException.class)
                 .hasMessage("No user with id: '" + nonexistentUserId + "' exists");
 
-        verify(lineupRepository).getLineupsByUserId(nonexistentUserId);
+        verify(lineupRepository).getLineupsByUserId(nonexistentUserId, 20L);
     }
 
     // create lineup

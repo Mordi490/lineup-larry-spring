@@ -29,7 +29,7 @@ public class LineupRepositoryTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            "postgres:16.3-alpine"
+            "postgres:17-alpine"
     );
 
     @Autowired
@@ -159,7 +159,7 @@ public class LineupRepositoryTest {
     // get all from user
     @Test
     void successfulGetAllLineupsFromUser() {
-        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(2L);
+        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(2L, 20L);
 
         assertThat(lineupsFromUser).isPresent();
         assertThat(lineupsFromUser.get().size()).isEqualTo(2);
@@ -169,7 +169,7 @@ public class LineupRepositoryTest {
 
     @Test
     void successfulGetAllLineupsFromUserWithZeroLineups() {
-        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(4L);
+        Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(4L, 20L);
 
         assertThat(lineupsFromUser).isPresent();
         assertThat(lineupsFromUser.get().size()).isZero();
@@ -180,30 +180,62 @@ public class LineupRepositoryTest {
         // expects null which then gets translated into not found?
         Long nonexistentUserId = 55L;
         assertThrows(InvalidLineupException.NoUserException.class, () -> {
-            lineupRepository.getLineupsByUserId(nonexistentUserId);
+            lineupRepository.getLineupsByUserId(nonexistentUserId, 20L);
         });
     }
 
     // testing "getByTitle", lineupId: 4 & 5 share the same title, 'same name'.
     @Test
     void successfulGetByTitle() {
-        List<Lineup> lineups = lineupRepository.getByTitle("same name");
+        List<Lineup> lineups = lineupRepository.getByTitle("same name", 20L);
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
 
         assertThat(lineups).isNotEmpty();
         assertThat(lineups.size()).isEqualTo(2);
+        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void successfulGetByTitlePageSized() {
+        List<Lineup> lineups = lineupRepository.getByTitle("same name", 1L);
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(lineups).isNotEmpty();
+        assertThat(lineups.size()).isEqualTo(1);
+        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void successfulGetByTitlePageSizedPagination() {
+        List<Lineup> lineups = lineupRepository.getByTitlePagination("same name", 1L, 5L);
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(lineups).isNotEmpty();
+        assertThat(lineups.size()).isEqualTo(1);
+        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
     }
 
     // return for zero finds
     @Test
     void successfulGetByTitleNoMatches() {
-        List<Lineup> lineups = lineupRepository.getByTitle("this title will most definitely not result in any lineups being fetched");
+        List<Lineup> lineups = lineupRepository.getByTitle("this title will most definitely not result in any lineups being fetched", 20L);
 
         assertThat(lineups).isEmpty();
     }
 
     @Test
     void successfulGetByAgentMapAndTitle() {
-        List<Lineup> lineups = lineupRepository.findByAgentAndMapAndTitle(Agent.BRIMSTONE, Map.BIND, "lineupThree");
+        List<Lineup> lineups = lineupRepository.findByAgentAndMapAndTitle(Agent.BRIMSTONE, Map.BIND, "lineupThree", 20L);
 
         List<Lineup> expectedLineup = Collections.singletonList(
                 new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)

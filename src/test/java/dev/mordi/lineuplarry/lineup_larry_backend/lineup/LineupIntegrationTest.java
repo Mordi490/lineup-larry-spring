@@ -37,7 +37,7 @@ public class LineupIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            "postgres:16.3-alpine"
+            "postgres:17-alpine"
     );
 
     @BeforeAll
@@ -851,8 +851,434 @@ public class LineupIntegrationTest {
         assertThat(response.getBody()).contains("The map: 'bindersToBeBinding' is not a valid map");
     }
 
+    // getByTitlePagination
+    // expect to get just the first lineup
+    @Test
+    void successfulGetByTitlePaginationSmallPageSize() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?title=same+name&pageSize=1",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedResult = Collections.singletonList(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedResult);
+    }
+
+    // expect to get exactly the 2 same name lineups
+    // TODO: standardize these betters
+    @Test
+    void successfulGetByTitlePagination() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?title=same+name&pageSize=3",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedResult = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedResult);
+    }
+
+    // expect to get the last same name lineup
+    @Test
+    void successfulGetByTitlePaginationSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?title=same+name&pageSize=1&lastValue=5",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedResult = Collections.singletonList(
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedResult);
+    }
+
+    // findByAgentPaginated
+    @Test
+    void successfulFindByAgentPagination() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=sova",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void successfulFindByAgentPaginationSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=sova&pageSize=1&lastValue=1",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    // findByMapPaginated
+    @Test
+    void successfulFindByMapPagination() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void successfulFindByMapPaginationSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent&lastValue=1",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    // findByAgentAndMapPaginated
+    @Test
+    void successfulFindByAgentAntMapPagination() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void successfulFindByAgentAndMapPaginationSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent&agent=sova&lastValue=1",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    // findByMapAndTitlePaginated
+    @Test
+    void successfulFindByMapAndTitlePaginated() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=icebox&title=same+name",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void successfulFindByMapAndTitlePaginatedSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=icebox&title=same+name&lastValue=5",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    // findByAgentAndTitlePaginated
+    @Test
+    void findByAgentAndTitlePaginated() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=killjoy&title=same+name",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void findByAgentAndTitlePaginatedSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=killjoy&title=same+name&lastValue=5",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    // findByAgentAndMapAndTitlePaginated
+    @Test
+    void findByAgentAndMapAndTitlePaginated() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=killjoy&map=icebox&title=same+name",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedLineup = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedLineup);
+    }
+
+    @Test
+    void findByAgentAndMapAndTitlePaginatedSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?agent=killjoy&map=icebox&title=same+name&lastValue=5",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedLineup = List.of(
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedLineup);
+    }
+
+    // getAllLineupsPaginated
+    @Test
+    void getAllLineupsPaginated() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?pageSize=2",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void getAllLineupsPaginatedSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?pageSize=2&lastValue=2",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
+                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
     // getByAuthor
-    // byAgent
-    // byMap
-    // combination of all of the above "filters"
+    @Test
+    void getAllLineupsFromAuthorPageSized() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups/user/3?pageSize=2",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void getAllLineupsFromAuthorPageSizedSeek() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups/user/3?pageSize=2&lastValue=4",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+
+        List<Lineup> expectedList = List.of(
+                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isEqualTo(expectedList);
+    }
+
+    @Test
+    void SeekOnNonexistentUser() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups/user/999?pageSize=10",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).contains("No user with id: '999' exists");
+    }
+
+    @Test
+    void getAllLineupsFromNonexistentUserPaginated() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/lineups/user/999?pageSize=10&lastValue=998",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).contains("No user with id: '999' exists");
+
+    }
+
+    // seeking on "bad" values, ie does not exist or the seek value does not fit the query criteria
+    @Test
+    void failPaginationOnNonexistentLineup() {
+        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+                "/api/lineups?map=ascent&agent=sova&lastValue=999",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Lineup>>() {
+                }
+        );
+        // JOOQ does not throw an error, it just returns an empty list, which we'll deem as fine and return it as well
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody().stream().toList()).isEmpty();
+    }
 }

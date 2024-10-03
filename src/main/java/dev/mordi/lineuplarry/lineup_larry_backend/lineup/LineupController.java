@@ -35,9 +35,14 @@ public class LineupController {
             @RequestParam(required = false)
             String agent,
             @RequestParam(required = false)
-            String map) {
-        List<Lineup> allLineups = lineupService.getAll(title, agent, map);
-        return new ResponseEntity<>(allLineups, HttpStatus.OK);
+            String map,
+            @RequestParam(required = false, defaultValue = "20")
+            Long pageSize,
+            @RequestParam(required = false)
+            Optional<Long> lastValue
+    ) {
+        List<Lineup> lineups = lineupService.getLineup(title, agent, map, pageSize, lastValue.orElse(null));
+        return new ResponseEntity<>(lineups, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -64,9 +69,15 @@ public class LineupController {
         lineupService.deleteLineup(id);
     }
 
+
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<Lineup>> getAllLineupsFromUser(@PathVariable Long id) {
-        Optional<List<Lineup>> lineups = lineupService.getAllLineupsFromUserId(id);
+    public ResponseEntity<List<Lineup>> getAllLineupsFromUser(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "20")
+            Long pageSize,
+            @RequestParam(required = false)
+            Optional<Long> lastValue) {
+        Optional<List<Lineup>> lineups = lineupService.getAllLineupsFromUserId(id, pageSize, lastValue.orElse(null));
 
         return lineups.map(ResponseEntity::ok)
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));

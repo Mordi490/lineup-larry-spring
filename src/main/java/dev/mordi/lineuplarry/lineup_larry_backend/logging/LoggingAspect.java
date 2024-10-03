@@ -38,4 +38,8 @@ public class LoggingAspect {
         log.info("Exiting method: {} with result: {}. Executed in {} milliseconds", joinPoint.getSignature().toShortString(), result, totalTime);
         return result;
     }
+
+    // TODO: add logging to the service layer
+
+    // TODO: add logging to the repository layer
 }

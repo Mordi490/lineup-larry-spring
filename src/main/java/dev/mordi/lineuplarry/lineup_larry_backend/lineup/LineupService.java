@@ -17,28 +17,54 @@ public class LineupService {
         this.lineupRepository = lineupRepository;
     }
 
-    // This should not be this ugly
-    public List<Lineup> getAll(String title, String agent, String map) {
+    // This should not b
+    // e this ugly
+    public List<Lineup> getLineup(String title, String agent, String map, Long pageSize, Long lastValue) {
         validateTitle(title);
         Agent validatedAgent = validateAgent(agent);
         Map validatedMap = validateMap(map);
 
+        // TODO: add pagination logic to all endpoints, for now we create a new dummy method to not have to redo like 60 tests
         if (title != null && validatedAgent == null && validatedMap == null) {
-            return lineupRepository.getByTitle(title);
+            if (lastValue != null) {
+                return lineupRepository.getByTitlePagination(title, pageSize, lastValue);
+            }
+            return lineupRepository.getByTitle(title, pageSize);
         } else if (title == null && validatedAgent != null && validatedMap == null) {
-            return lineupRepository.findByAgent(validatedAgent);
+            if (lastValue != null) {
+                return lineupRepository.findByAgentPaginated(validatedAgent, pageSize, lastValue);
+            }
+            return lineupRepository.findByAgent(validatedAgent, pageSize);
         } else if (title == null && validatedAgent == null && validatedMap != null) {
-            return lineupRepository.findByMap(validatedMap);
+            if (lastValue != null) {
+                return lineupRepository.findByMapPaginated(validatedMap, pageSize, lastValue);
+            }
+            return lineupRepository.findByMap(validatedMap, pageSize);
         } else if (title == null && validatedAgent != null && validatedMap != null) {
-            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap);
+            if (lastValue != null) {
+                return lineupRepository.findByAgentAndMapPaginated(validatedAgent, validatedMap, pageSize, lastValue);
+            }
+            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap, pageSize);
         } else if (title != null && validatedAgent == null && validatedMap != null) {
-            return lineupRepository.findByMapAndTitle(validatedMap, title);
+            if (lastValue != null) {
+                return lineupRepository.findByMapAndTitlePaginated(validatedMap, title, pageSize, lastValue);
+            }
+            return lineupRepository.findByMapAndTitle(validatedMap, title, pageSize);
         } else if (title != null && validatedAgent != null && validatedMap == null) {
-            return lineupRepository.findByAgentAndTitle(validatedAgent, title);
+            if (lastValue != null) {
+                return lineupRepository.findByAgentAndTitlePaginated(validatedAgent, title, pageSize, lastValue);
+            }
+            return lineupRepository.findByAgentAndTitle(validatedAgent, title, pageSize);
         } else if (title != null && validatedAgent != null && validatedMap != null) {
-            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title);
+            if (lastValue != null) {
+                return lineupRepository.findByAgentAndMapAndTitlePaginated(validatedAgent, validatedMap, title, pageSize, lastValue);
+            }
+            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title, pageSize);
         } else {
-            return lineupRepository.findAllLineups();
+            if (lastValue != null) {
+                return lineupRepository.getAllLineupsPaginated(pageSize, lastValue);
+            }
+            return lineupRepository.getAllLineups(pageSize);
         }
     }
 
@@ -46,13 +72,16 @@ public class LineupService {
         return lineupRepository.getLineupById(id);
     }
 
-    public Optional<List<Lineup>> getAllLineupsFromUserId(Long id) {
-        return lineupRepository.getLineupsByUserId(id);
+    public Optional<List<Lineup>> getAllLineupsFromUserId(Long id, Long pageSize, Long lastValue) {
+        if (lastValue != null) {
+            return lineupRepository.getLineupsByUserIdSeek(id, pageSize, lastValue);
+        }
+        return lineupRepository.getLineupsByUserId(id, pageSize);
     }
 
-    public List<Lineup> getByTitle(String name) {
+    public List<Lineup> getByTitle(String name, Long pageSize) {
         validateGetByTitleString(name);
-        return lineupRepository.getByTitle(name);
+        return lineupRepository.getByTitle(name, pageSize);
     }
 
     private void validateGetByTitleString(String name) {

@@ -34,7 +34,7 @@ public class UserIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            "postgres:16.3-alpine"
+            "postgres:17-alpine"
     );
 
     @BeforeAll

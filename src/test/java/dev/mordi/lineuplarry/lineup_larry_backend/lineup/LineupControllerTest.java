@@ -66,7 +66,7 @@ public class LineupControllerTest {
     // getAll
     @Test
     void successfulGetAll() throws Exception {
-        when(lineupService.getAll(null, null, null)).thenReturn(Arrays.asList(lineupOne, lineupTwo));
+        when(lineupService.getLineup(null, null, null, 20L, null)).thenReturn(Arrays.asList(lineupOne, lineupTwo));
 
         MvcResult result = mockMvc.perform(get("/api/lineups"))
                 .andExpect(status().isOk())
@@ -75,7 +75,7 @@ public class LineupControllerTest {
 
         assertThat(result.getResponse().getContentType()).isEqualToIgnoringCase(MediaType.APPLICATION_JSON.toString());
         assertThat(result.getResponse().getContentAsString()).contains(lineupOne.title(), lineupTwo.title());
-        verify(lineupService).getAll(null, null, null);
+        verify(lineupService).getLineup(null, null, null, 20L, null);
     }
 
     // getById
@@ -115,40 +115,40 @@ public class LineupControllerTest {
     void getLineupsFromUserWithLineups() throws Exception {
         Long userId = lineupOne.userId();
         Optional<List<Lineup>> userOnesLineups = Optional.of(Arrays.asList(lineupOne, lineupTwo));
-        when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(userOnesLineups);
+        when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(userOnesLineups);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        verify(lineupService).getAllLineupsFromUserId(userId);
+        verify(lineupService).getAllLineupsFromUserId(userId, 20L, null);
     }
 
     @Test
     void getLineupsFromUserWithNoLineups() throws Exception {
         Long userId = userWithNoLineups.id();
         Optional<List<Lineup>> emptyArray = Optional.of(Arrays.asList());
-        when(lineupService.getAllLineupsFromUserId(userId)).thenReturn(emptyArray);
+        when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(emptyArray);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(lineupService).getAllLineupsFromUserId(userId);
+        verify(lineupService).getAllLineupsFromUserId(userId, 20L, null);
     }
 
     @Test
     void getLineupsFromNonexistentUser() throws Exception {
         Long nonexistentUserId = 222L;
         InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(nonexistentUserId);
-        when(lineupService.getAllLineupsFromUserId(nonexistentUserId)).thenThrow(exception);
+        when(lineupService.getAllLineupsFromUserId(nonexistentUserId, 20L, null)).thenThrow(exception);
 
         mockMvc.perform(get("/api/lineups/user/{id}", nonexistentUserId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("User not found"))
                 .andExpect(jsonPath("$.detail").value("No user with id: '" + nonexistentUserId + "' exists"));
 
-        verify(lineupService).getAllLineupsFromUserId(nonexistentUserId);
+        verify(lineupService).getAllLineupsFromUserId(nonexistentUserId, 20L, null);
     }
 
     // create
@@ -354,21 +354,21 @@ public class LineupControllerTest {
     @Test
     void successfulGetByTitle() {
         List<Lineup> mockedResult = Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne);
-        when(lineupService.getByTitle("lineup title")).thenReturn(mockedResult);
+        when(lineupService.getByTitle("lineup title", 20L)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("lineup title");
+        List<Lineup> lineups = lineupService.getByTitle("lineup title", 20L);
 
         assertThat(lineups).isNotNull();
         assertThat(lineups.size()).isEqualTo(2);
-        verify(lineupService).getByTitle("lineup title");
+        verify(lineupService).getByTitle("lineup title", 20L);
     }
 
     @Test
     void successfulGetByTitleNoMatches() {
         List<Lineup> mockedResult = List.of();
-        when(lineupService.getByTitle("bad search title")).thenReturn(mockedResult);
+        when(lineupService.getByTitle("bad search title", 20L)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("bad search title");
+        List<Lineup> lineups = lineupService.getByTitle("bad search title", 20L);
 
         assertThat(lineups.toArray()).isEmpty();
     }
