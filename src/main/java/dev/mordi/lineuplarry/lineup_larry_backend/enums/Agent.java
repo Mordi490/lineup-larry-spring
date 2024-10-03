@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 public enum Agent {
     BRIMSTONE,
     VIPER,
-    Omen,
+    OMEN,
     KILLJOY,
     CYPHER,
     SOVA,
