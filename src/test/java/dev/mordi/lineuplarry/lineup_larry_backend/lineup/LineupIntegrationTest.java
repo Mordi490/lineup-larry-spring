@@ -62,7 +62,21 @@ public class LineupIntegrationTest {
                 new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
                 new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
                 new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
+                new Lineup(7L, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L),
+                new Lineup(8L, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L),
+                new Lineup(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L),
+                new Lineup(10L, Agent.PHOENIX, Map.LOTUS, "cheeky flash", "then click heads", 1L),
+                new Lineup(11L, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L),
+                new Lineup(12L, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L),
+                new Lineup(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L),
+                new Lineup(14L, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L),
+                new Lineup(15L, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L),
+                new Lineup(16L, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L),
+                new Lineup(17L, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L),
+                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L),
+                new Lineup(19L, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L),
+                new Lineup(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L)
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -167,12 +181,13 @@ public class LineupIntegrationTest {
         // user 2 has lineups, 2 and 3:
         List<Lineup> expectedLineups = List.of(
                 new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
+                new Lineup(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L)
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(2);
+        assertThat(res.getBody().size()).isEqualTo(expectedLineups.size());
         assertThat(res.getBody().stream().toList()).isEqualTo(expectedLineups);
     }
 
@@ -657,7 +672,8 @@ public class LineupIntegrationTest {
         );
 
         List<Lineup> expectedResult = List.of(
-                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L)
+                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
+                new Lineup(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L)
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -967,7 +983,8 @@ public class LineupIntegrationTest {
 
         List<Lineup> expectedList = List.of(
                 new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
+                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -986,7 +1003,8 @@ public class LineupIntegrationTest {
         );
 
         List<Lineup> expectedList = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
+                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1007,7 +1025,8 @@ public class LineupIntegrationTest {
 
         List<Lineup> expectedList = List.of(
                 new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
+                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1269,7 +1288,7 @@ public class LineupIntegrationTest {
     @Test
     void failPaginationOnNonexistentLineup() {
         ResponseEntity<List<Lineup>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent&agent=sova&lastValue=999",
+                "/api/lineups?map=pearl&agent=vyse&lastValue=999",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Lineup>>() {
@@ -1278,7 +1297,7 @@ public class LineupIntegrationTest {
         // JOOQ does not throw an error, it just returns an empty list, which we'll deem as fine and return it as well
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().stream().toList()).isEmpty();
     }
 }

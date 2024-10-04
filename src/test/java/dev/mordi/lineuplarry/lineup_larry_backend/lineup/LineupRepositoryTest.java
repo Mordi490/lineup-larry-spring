@@ -35,12 +35,12 @@ public class LineupRepositoryTest {
     @Autowired
     LineupRepository lineupRepository;
 
-    // getAll
+    // NB! no pagination,
     @Test
     void getAllLineups() {
         List<Lineup> allLineups = lineupRepository.findAllLineups();
 
-        assertThat(allLineups.size()).isEqualTo(6);
+        assertThat(allLineups.size()).isEqualTo(25);
         assertThat(allLineups.getFirst().id()).isEqualTo(1L);
         assertThat(allLineups.getFirst().title()).isEqualTo("lineupOne");
         assertThat(allLineups.getFirst().body()).isEqualTo("bodyOne");
@@ -86,7 +86,6 @@ public class LineupRepositoryTest {
     void failCreateDueToUsingNonexistentUserId() {
         Lineup lineupWithNonexistentUserId = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "valid body", 999L);
 
-        // should be something like this
         assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
             lineupRepository.createLineup(lineupWithNonexistentUserId);
         });
@@ -162,9 +161,9 @@ public class LineupRepositoryTest {
         Optional<List<Lineup>> lineupsFromUser = lineupRepository.getLineupsByUserId(2L, 20L);
 
         assertThat(lineupsFromUser).isPresent();
-        assertThat(lineupsFromUser.get().size()).isEqualTo(2);
+        assertThat(lineupsFromUser.get().size()).isEqualTo(3);
         assertThat(lineupsFromUser.get().getFirst().title()).isEqualTo("lineupTwo");
-        assertThat(lineupsFromUser.get().getLast().title()).isEqualTo("lineupThree");
+        assertThat(lineupsFromUser.get().getLast().title()).isEqualTo("teleport thingy");
     }
 
     @Test
