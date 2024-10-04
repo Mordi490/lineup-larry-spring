@@ -41,13 +41,33 @@ public class DevModeConfig {
             userRepository.createUser(new User(null, "userFour"));
             userRepository.createUser(new User(null, "userFive"));
 
-            // add lineups
+            // seeded lineup data: designating REYNA and PEARL to be the agent and map with no data associated with them
             lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L));
             lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 2L));
             lineupRepository.createLineup(new Lineup(null, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 2L));
             lineupRepository.createLineup(new Lineup(null, Agent.CYPHER, Map.SUNSET, "titleFour", "bodyFour", 3L));
             lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L));
             lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L));
+
+            lineupRepository.createLineup(new Lineup(null, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L));
+            lineupRepository.createLineup(new Lineup(null, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L));
+            lineupRepository.createLineup(new Lineup(null, Agent.PHOENIX, Map.LOTUS, "cheeky flash", " then click heads", 1L));
+            lineupRepository.createLineup(new Lineup(null, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.HARBOR, Map.FRACTURE, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.GEKKO, Map.BIND, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.DEADLOCK, Map.FRACTURE, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.ISO, Map.BIND, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.CLOVE, Map.BIND, "titleFour", "bodyFour", 3L));
 
             // more to come
 
