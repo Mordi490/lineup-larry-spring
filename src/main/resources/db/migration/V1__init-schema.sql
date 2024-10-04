@@ -21,6 +21,8 @@ CREATE TYPE agent AS ENUM (
     'SOVA',
     'VIPER',
     'YORU',
+    'ISO',
+    'CLOVE',
     'VYSE'
 );
 
