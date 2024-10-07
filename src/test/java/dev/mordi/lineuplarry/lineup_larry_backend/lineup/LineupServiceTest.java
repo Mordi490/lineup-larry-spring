@@ -36,11 +36,11 @@ public class LineupServiceTest {
     private Lineup lineupFour;
     private Lineup lineupFive;
 
+    // consider making this a beforeAll
     @BeforeEach
     void setUp() {
         User userWithLineups = new User(1L, "userOne");
         User userWithoutLineups = new User(2L, "userTwo");
-
 
         lineupOne = new Lineup(1L, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L);
         lineupTwo = new Lineup(2L, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 1L);
@@ -192,13 +192,13 @@ public class LineupServiceTest {
 
     @Test
     void successfulGetLineupLineupsFromUserWithNoLineups() {
-        Optional<List<Lineup>> emptyList = Optional.empty();
+        Optional<List<Lineup>> emptyList = Optional.of(List.of());
         Long userId = 2L;
         when(lineupRepository.getLineupsByUserId(userId, 20L)).thenReturn(emptyList);
 
         Optional<List<Lineup>> fetchedList = lineupService.getAllLineupsFromUserId(userId, 20L, null);
 
-        assertThat(fetchedList).isEmpty();
+        assertThat(fetchedList).isPresent();
         verify(lineupRepository).getLineupsByUserId(userId, 20L);
     }
 

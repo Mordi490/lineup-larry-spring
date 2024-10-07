@@ -12,6 +12,7 @@ import java.util.Optional;
 import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.LINEUP;
 import static dev.mordi.lineuplarry.lineup_larry_backend.test.jooq.database.Tables.USERS;
 import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.selectFrom;
 
 
 @Repository
@@ -22,6 +23,8 @@ public class LineupRepository {
     LineupRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
+
+    // TODO: review and rename these
 
     public List<Lineup> findAllLineups() {
         return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
@@ -45,10 +48,11 @@ public class LineupRepository {
         }
     }
 
-    private boolean doesUserExist(Long userId, boolean isCreate) {
+    // TODO: refactor this to not be stupid
+    protected boolean doesUserExist(Long userId, boolean isCreate) {
         boolean exists = dsl.fetchExists(
-                dsl.selectOne().from(USERS).where(USERS.ID.eq(userId))
-        );
+                selectFrom(USERS).where(USERS.ID.eq(userId)));
+
         if (!exists && !isCreate) {
             throw new InvalidLineupException.NoUserException(userId);
         }
@@ -101,7 +105,7 @@ public class LineupRepository {
         return Optional.of(lineups);
     }
 
-    public Optional<List<Lineup>> getLineupsByUserIdSeek(Long id, Long pageSize, long lastValue) {
+    public Optional<List<Lineup>> getLineupsByUserIdPaginated(Long id, Long pageSize, long lastValue) {
         boolean exists = doesUserExist(id, false);
 
         if (!exists) {

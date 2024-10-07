@@ -183,6 +183,39 @@ public class LineupRepositoryTest {
         });
     }
 
+    @Test
+    void successfulGetAllLineupsFromUserPaginated() {
+        Optional<List<Lineup>> lineups = lineupRepository.getLineupsByUserIdPaginated(2L, 20L, 2L);
+
+        List<Lineup> expectedLineups = List.of(
+                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
+                new Lineup(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L)
+        );
+
+        assertThat(lineups).isPresent();
+        assertThat(lineups.get()).isNotNull();
+        assertThat(lineups.get()).isEqualTo(expectedLineups);
+    }
+
+    // test on nonexistent user, which should return an error
+    // TODO: figure out wtf is going on
+    @Test
+    void GetAllLineupsFromNonexistentUserPaginated() {
+        Long nonexistentUserId = 999L;
+        assertThrows(InvalidLineupException.NoUserException.class, () -> {
+            lineupRepository.getLineupsByUserIdPaginated(nonexistentUserId, 20L, 2L);
+        });
+    }
+
+    // test on invalid lastValue, which is just empty set
+    @Test
+    void getAllLineupsFromUserWithInvalidLastValue() {
+        Optional<List<Lineup>> lineups = lineupRepository.getLineupsByUserIdPaginated(2L, 20L, 999L);
+
+        assertThat(lineups).isPresent();
+        assertThat(lineups.get()).isEqualTo(Collections.EMPTY_LIST);
+    }
+
     // testing "getByTitle", lineupId: 4 & 5 share the same title, 'same name'.
     @Test
     void successfulGetByTitle() {
@@ -242,5 +275,35 @@ public class LineupRepositoryTest {
 
         assertThat(lineups).isNotEmpty();
         assertThat(lineups).isEqualTo(expectedLineup);
+    }
+
+    @Test
+    void successfulDoesUserExistOnExistingUser() {
+        boolean answer = lineupRepository.doesUserExist(1L, false);
+
+        assertThat(answer).isEqualTo(true);
+    }
+
+    @Test
+    void negativeDoesUserExistOnNonexistentId() {
+        Long nonexistentUserId = 999L;
+        assertThrows(InvalidLineupException.NoUserException.class, () -> {
+            lineupRepository.doesUserExist(nonexistentUserId, false);
+        });
+    }
+
+    @Test
+    void existingDoesUserExistIsCreate() {
+        boolean answer = lineupRepository.doesUserExist(1L, true);
+
+        assertThat(answer).isEqualTo(true);
+    }
+
+    @Test
+    void nonexistentDoesUserExistIsCreate() {
+        Long nonexistentUserId = 999L;
+        assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
+            lineupRepository.doesUserExist(nonexistentUserId, true);
+        });
     }
 }

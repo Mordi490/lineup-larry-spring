@@ -114,7 +114,7 @@ public class LineupControllerTest {
     @Test
     void getLineupsFromUserWithLineups() throws Exception {
         Long userId = lineupOne.userId();
-        Optional<List<Lineup>> userOnesLineups = Optional.of(Arrays.asList(lineupOne, lineupTwo));
+        Optional<List<Lineup>> userOnesLineups = Optional.of(List.of(lineupOne, lineupTwo));
         when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(userOnesLineups);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
@@ -127,7 +127,7 @@ public class LineupControllerTest {
     @Test
     void getLineupsFromUserWithNoLineups() throws Exception {
         Long userId = userWithNoLineups.id();
-        Optional<List<Lineup>> emptyArray = Optional.of(Arrays.asList());
+        Optional<List<Lineup>> emptyArray = Optional.of(List.of());
         when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(emptyArray);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))

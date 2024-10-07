@@ -207,7 +207,7 @@ public class LineupIntegrationTest {
     }
 
     @Test
-    void failGetALlLineupsFromUserWithInvalidUserId() {
+    void failGetAlLineupsFromUserWithInvalidUserId() {
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/user/999",
                 HttpMethod.GET,
@@ -1256,7 +1256,7 @@ public class LineupIntegrationTest {
     }
 
     @Test
-    void SeekOnNonexistentUser() {
+    void GetAllLineupsFromNonexistentUser() {
         ResponseEntity<String> response = restTemplate.exchange(
                 "/api/lineups/user/999?pageSize=10",
                 HttpMethod.GET,
@@ -1272,7 +1272,7 @@ public class LineupIntegrationTest {
     @Test
     void getAllLineupsFromNonexistentUserPaginated() {
         ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups/user/999?pageSize=10&lastValue=998",
+                "/api/lineups/user/999?lastValue=72",
                 HttpMethod.GET,
                 null,
                 String.class

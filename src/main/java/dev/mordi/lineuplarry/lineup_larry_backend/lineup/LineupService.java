@@ -17,14 +17,13 @@ public class LineupService {
         this.lineupRepository = lineupRepository;
     }
 
-    // This should not b
-    // e this ugly
+    // TODO: make methods like "getByTitlePagination" just be "geByTile"
+    // This should not be this ugly
     public List<Lineup> getLineup(String title, String agent, String map, Long pageSize, Long lastValue) {
         validateTitle(title);
         Agent validatedAgent = validateAgent(agent);
         Map validatedMap = validateMap(map);
 
-        // TODO: add pagination logic to all endpoints, for now we create a new dummy method to not have to redo like 60 tests
         if (title != null && validatedAgent == null && validatedMap == null) {
             if (lastValue != null) {
                 return lineupRepository.getByTitlePagination(title, pageSize, lastValue);
@@ -74,7 +73,7 @@ public class LineupService {
 
     public Optional<List<Lineup>> getAllLineupsFromUserId(Long id, Long pageSize, Long lastValue) {
         if (lastValue != null) {
-            return lineupRepository.getLineupsByUserIdSeek(id, pageSize, lastValue);
+            return lineupRepository.getLineupsByUserIdPaginated(id, pageSize, lastValue);
         }
         return lineupRepository.getLineupsByUserId(id, pageSize);
     }
