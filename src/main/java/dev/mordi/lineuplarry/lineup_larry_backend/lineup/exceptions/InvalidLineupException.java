@@ -95,4 +95,10 @@ public class InvalidLineupException extends RuntimeException {
             super("Cannot change lineup id from: '" + prevId + "' to: '" + newId + "'");
         }
     }
+
+    public static class NoSuchLineupException extends InvalidLineupException {
+        public NoSuchLineupException(Long lineupId) {
+            super("No lineup with id: '" + lineupId + "' exists");
+        }
+    }
 }

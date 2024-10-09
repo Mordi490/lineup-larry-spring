@@ -354,21 +354,21 @@ public class LineupControllerTest {
     @Test
     void successfulGetByTitle() {
         List<Lineup> mockedResult = Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne);
-        when(lineupService.getByTitle("lineup title", 20L)).thenReturn(mockedResult);
+        when(lineupService.getByTitle("lineup title", 20L, null)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("lineup title", 20L);
+        List<Lineup> lineups = lineupService.getByTitle("lineup title", 20L, null);
 
         assertThat(lineups).isNotNull();
         assertThat(lineups.size()).isEqualTo(2);
-        verify(lineupService).getByTitle("lineup title", 20L);
+        verify(lineupService).getByTitle("lineup title", 20L, null);
     }
 
     @Test
     void successfulGetByTitleNoMatches() {
         List<Lineup> mockedResult = List.of();
-        when(lineupService.getByTitle("bad search title", 20L)).thenReturn(mockedResult);
+        when(lineupService.getByTitle("bad search title", 20L, null)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("bad search title", 20L);
+        List<Lineup> lineups = lineupService.getByTitle("bad search title", 20L, null);
 
         assertThat(lineups.toArray()).isEmpty();
     }

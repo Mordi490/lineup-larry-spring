@@ -17,53 +17,27 @@ public class LineupService {
         this.lineupRepository = lineupRepository;
     }
 
-    // TODO: make methods like "getByTitlePagination" just be "geByTile"
-    // This should not be this ugly
     public List<Lineup> getLineup(String title, String agent, String map, Long pageSize, Long lastValue) {
         validateTitle(title);
         Agent validatedAgent = validateAgent(agent);
         Map validatedMap = validateMap(map);
 
         if (title != null && validatedAgent == null && validatedMap == null) {
-            if (lastValue != null) {
-                return lineupRepository.getByTitlePagination(title, pageSize, lastValue);
-            }
-            return lineupRepository.getByTitle(title, pageSize);
+            return lineupRepository.getByTitle(title, pageSize, lastValue);
         } else if (title == null && validatedAgent != null && validatedMap == null) {
-            if (lastValue != null) {
-                return lineupRepository.findByAgentPaginated(validatedAgent, pageSize, lastValue);
-            }
-            return lineupRepository.findByAgent(validatedAgent, pageSize);
+            return lineupRepository.findByAgent(validatedAgent, pageSize, lastValue);
         } else if (title == null && validatedAgent == null && validatedMap != null) {
-            if (lastValue != null) {
-                return lineupRepository.findByMapPaginated(validatedMap, pageSize, lastValue);
-            }
-            return lineupRepository.findByMap(validatedMap, pageSize);
+            return lineupRepository.findByMap(validatedMap, pageSize, lastValue);
         } else if (title == null && validatedAgent != null && validatedMap != null) {
-            if (lastValue != null) {
-                return lineupRepository.findByAgentAndMapPaginated(validatedAgent, validatedMap, pageSize, lastValue);
-            }
-            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap, pageSize);
+            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap, pageSize, lastValue);
         } else if (title != null && validatedAgent == null && validatedMap != null) {
-            if (lastValue != null) {
-                return lineupRepository.findByMapAndTitlePaginated(validatedMap, title, pageSize, lastValue);
-            }
-            return lineupRepository.findByMapAndTitle(validatedMap, title, pageSize);
+            return lineupRepository.findByMapAndTitle(validatedMap, title, pageSize, lastValue);
         } else if (title != null && validatedAgent != null && validatedMap == null) {
-            if (lastValue != null) {
-                return lineupRepository.findByAgentAndTitlePaginated(validatedAgent, title, pageSize, lastValue);
-            }
-            return lineupRepository.findByAgentAndTitle(validatedAgent, title, pageSize);
+            return lineupRepository.findByAgentAndTitle(validatedAgent, title, pageSize, lastValue);
         } else if (title != null && validatedAgent != null && validatedMap != null) {
-            if (lastValue != null) {
-                return lineupRepository.findByAgentAndMapAndTitlePaginated(validatedAgent, validatedMap, title, pageSize, lastValue);
-            }
-            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title, pageSize);
+            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title, pageSize, lastValue);
         } else {
-            if (lastValue != null) {
-                return lineupRepository.getAllLineupsPaginated(pageSize, lastValue);
-            }
-            return lineupRepository.getAllLineups(pageSize);
+            return lineupRepository.getLineups(pageSize, lastValue);
         }
     }
 
@@ -72,15 +46,12 @@ public class LineupService {
     }
 
     public Optional<List<Lineup>> getAllLineupsFromUserId(Long id, Long pageSize, Long lastValue) {
-        if (lastValue != null) {
-            return lineupRepository.getLineupsByUserIdPaginated(id, pageSize, lastValue);
-        }
-        return lineupRepository.getLineupsByUserId(id, pageSize);
+        return lineupRepository.getLineupsByUserId(id, pageSize, lastValue);
     }
 
-    public List<Lineup> getByTitle(String name, Long pageSize) {
+    public List<Lineup> getByTitle(String name, Long pageSize, Long lastValue) {
         validateGetByTitleString(name);
-        return lineupRepository.getByTitle(name, pageSize);
+        return lineupRepository.getByTitle(name, pageSize, lastValue);
     }
 
     private void validateGetByTitleString(String name) {
