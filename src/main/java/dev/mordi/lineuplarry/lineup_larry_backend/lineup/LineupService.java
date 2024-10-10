@@ -22,23 +22,7 @@ public class LineupService {
         Agent validatedAgent = validateAgent(agent);
         Map validatedMap = validateMap(map);
 
-        if (title != null && validatedAgent == null && validatedMap == null) {
-            return lineupRepository.getByTitle(title, pageSize, lastValue);
-        } else if (title == null && validatedAgent != null && validatedMap == null) {
-            return lineupRepository.findByAgent(validatedAgent, pageSize, lastValue);
-        } else if (title == null && validatedAgent == null && validatedMap != null) {
-            return lineupRepository.findByMap(validatedMap, pageSize, lastValue);
-        } else if (title == null && validatedAgent != null && validatedMap != null) {
-            return lineupRepository.findByAgentAndMap(validatedAgent, validatedMap, pageSize, lastValue);
-        } else if (title != null && validatedAgent == null && validatedMap != null) {
-            return lineupRepository.findByMapAndTitle(validatedMap, title, pageSize, lastValue);
-        } else if (title != null && validatedAgent != null && validatedMap == null) {
-            return lineupRepository.findByAgentAndTitle(validatedAgent, title, pageSize, lastValue);
-        } else if (title != null && validatedAgent != null && validatedMap != null) {
-            return lineupRepository.findByAgentAndMapAndTitle(validatedAgent, validatedMap, title, pageSize, lastValue);
-        } else {
-            return lineupRepository.getLineups(pageSize, lastValue);
-        }
+        return lineupRepository.getLineups(title, validatedAgent, validatedMap, pageSize, lastValue);
     }
 
     public Optional<Lineup> getById(Long id) {
@@ -51,7 +35,7 @@ public class LineupService {
 
     public List<Lineup> getByTitle(String name, Long pageSize, Long lastValue) {
         validateGetByTitleString(name);
-        return lineupRepository.getByTitle(name, pageSize, lastValue);
+        return lineupRepository.getLineups(name, null, null, pageSize, lastValue);
     }
 
     private void validateGetByTitleString(String name) {

@@ -35,18 +35,6 @@ public class LineupRepositoryTest {
     @Autowired
     LineupRepository lineupRepository;
 
-    // NB! no pagination,
-    @Test
-    void getAllLineups() {
-        List<Lineup> allLineups = lineupRepository.findAllLineups();
-
-        assertThat(allLineups.size()).isEqualTo(25);
-        assertThat(allLineups.getFirst().id()).isEqualTo(1L);
-        assertThat(allLineups.getFirst().title()).isEqualTo("lineupOne");
-        assertThat(allLineups.getFirst().body()).isEqualTo("bodyOne");
-        assertThat(allLineups.getFirst().userId()).isEqualTo(1L);
-    }
-
     // Get by ID
     @Test
     void successfulGetById() throws Exception {
@@ -218,7 +206,7 @@ public class LineupRepositoryTest {
     // TODO: tests for "findByMapAndTitle"
     @Test
     void successfulFindByMapAndTitle() {
-        List<Lineup> query = lineupRepository.findByMapAndTitle(Map.ICEBOX, "same name", 20L, null);
+        List<Lineup> query = lineupRepository.getLineups("same name", null, Map.ICEBOX, 20L, null);
 
         List<Lineup> expectedResult = List.of(
                 new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
@@ -232,7 +220,7 @@ public class LineupRepositoryTest {
 
     @Test
     void findByMapAndTitlePagination() {
-        List<Lineup> query = lineupRepository.findByMapAndTitle(Map.ICEBOX, "same name", 20L, 5L);
+        List<Lineup> query = lineupRepository.getLineups("same name", null, Map.ICEBOX, 20L, 5L);
 
         List<Lineup> expectedResult = List.of(
                 new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
@@ -244,7 +232,7 @@ public class LineupRepositoryTest {
     // no matches, just agent, vs just map vs both
     @Test
     void emptyFindByMapAndTitle() {
-        List<Lineup> query = lineupRepository.findByMapAndTitle(Map.PEARL, "not a match", 20L, null);
+        List<Lineup> query = lineupRepository.getLineups("not a match", null, Map.PEARL, 20L, null);
 
         List<Lineup> expectedList = List.of();
 
@@ -254,7 +242,7 @@ public class LineupRepositoryTest {
     // testing "getByTitle", lineupId: 4 & 5 share the same title, 'same name'.
     @Test
     void successfulGetByTitle() {
-        List<Lineup> lineups = lineupRepository.getByTitle("same name", 20L, null);
+        List<Lineup> lineups = lineupRepository.getLineups("same name", null, null, 20L, null);
 
         List<Lineup> expectedResult = List.of(
                 new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
@@ -268,7 +256,7 @@ public class LineupRepositoryTest {
 
     @Test
     void successfulGetByTitlePageSized() {
-        List<Lineup> lineups = lineupRepository.getByTitle("same name", 1L, null);
+        List<Lineup> lineups = lineupRepository.getLineups("same name", null, null, 1L, null);
 
         List<Lineup> expectedResult = List.of(
                 new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
@@ -281,7 +269,7 @@ public class LineupRepositoryTest {
 
     @Test
     void successfulGetByTitlePageSizedPagination() {
-        List<Lineup> lineups = lineupRepository.getByTitle("same name", 1L, 5L);
+        List<Lineup> lineups = lineupRepository.getLineups("same name", null, null, 1L, 5L);
 
         List<Lineup> expectedResult = List.of(
                 new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
@@ -295,8 +283,8 @@ public class LineupRepositoryTest {
     // return for zero finds
     @Test
     void successfulGetByTitleNoMatches() {
-        List<Lineup> lineups = lineupRepository.getByTitle(
-                "this title will most definitely not result in any lineups being fetched",
+        List<Lineup> lineups = lineupRepository.getLineups(
+                "this title will most definitely not result in any lineups being fetched", null, null,
                 20L, null);
 
         assertThat(lineups).isEmpty();
@@ -304,8 +292,8 @@ public class LineupRepositoryTest {
 
     @Test
     void successfulGetByAgentMapAndTitle() {
-        List<Lineup> lineups = lineupRepository.findByAgentAndMapAndTitle(Agent.BRIMSTONE,
-                Map.BIND, "lineupThree", 20L, null);
+        List<Lineup> lineups = lineupRepository.getLineups("lineupThree", Agent.BRIMSTONE,
+                Map.BIND, 20L, null);
 
         List<Lineup> expectedLineup = Collections.singletonList(
                 new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
