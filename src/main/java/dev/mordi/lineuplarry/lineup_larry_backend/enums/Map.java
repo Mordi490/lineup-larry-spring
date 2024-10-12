@@ -14,7 +14,8 @@ public enum Map {
     LOTUS,
     PEARL,
     SPLIT,
-    SUNSET;
+    SUNSET,
+    ABYSS;
 
     private static final Set<String> MAPS =
             Stream.of(Map.values()).map(Enum::name).collect(Collectors.toSet());
