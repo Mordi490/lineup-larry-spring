@@ -33,6 +33,7 @@ INSERT INTO lineup(id, agent, map, title, body, user_id) VALUES
     (23, 'DEADLOCK', 'FRACTURE', 'titleFour', 'bodyFour', 3),
     (24, 'ISO', 'BIND', 'titleFour', 'bodyFour', 3),
     (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3);
+    (26, 'JETT', 'FRACTURE', 'titleFour', 'bodyFour', 3);
 
 ALTER SEQUENCE users_id_seq RESTART WITH 101;
 ALTER SEQUENCE lineup_id_seq RESTART WITH 101;

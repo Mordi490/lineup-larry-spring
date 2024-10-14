@@ -68,6 +68,7 @@ public class DevModeConfig {
             lineupRepository.createLineup(new Lineup(null, Agent.DEADLOCK, Map.FRACTURE, "titleFour", "bodyFour", 3L));
             lineupRepository.createLineup(new Lineup(null, Agent.ISO, Map.BIND, "titleFour", "bodyFour", 3L));
             lineupRepository.createLineup(new Lineup(null, Agent.CLOVE, Map.BIND, "titleFour", "bodyFour", 3L));
+            lineupRepository.createLineup(new Lineup(null, Agent.JETT, Map.FRACTURE, "titleFour", "bodyFour", 3L));
 
             // more to come
 
