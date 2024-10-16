@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS
         id bigserial not null,
         username text not null,
         primary key (id)
+        -- TODO: add create_at & last_updated_at
     );
 
 CREATE TABLE IF NOT EXISTS
@@ -56,4 +57,14 @@ CREATE TABLE IF NOT EXISTS
         body text not null,
         user_id bigint REFERENCES users (id) ON DELETE CASCADE not null,
         primary key (id)
+        -- TODO: add create_at & last_updated_at
+        -- TODO: add patch, patches will eventually include map changes
+    );
+
+ CREATE TABLE IF NOT EXISTS
+    likes (
+        user_id bigint REFERENCES users (id) ON DELETE CASCADE,
+        lineup_id bigint REFERENCES lineup (id) ON DELETE CASCADE,
+        liked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        PRIMARY KEY (user_id, lineup_id)
     );
