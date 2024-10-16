@@ -35,5 +35,25 @@ INSERT INTO lineup(id, agent, map, title, body, user_id) VALUES
     (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3);
     (26, 'JETT', 'FRACTURE', 'titleFour', 'bodyFour', 3);
 
+ INSERT INTO likes(user_id, lineup_id) VALUES
+    (1, 2),
+    (1, 3),
+    (1, 11),
+    (1, 22),
+    (1,18),
+    (1, 16),
+    (2, 2),
+    (2, 1),
+    (2, 22),
+    (2, 23),
+    (2, 12),
+    (2, 14),
+    (3, 4),
+    (3, 22),
+    (3, 15),
+    (3, 9),
+    (3, 20),
+    (3, 1);
+
 ALTER SEQUENCE users_id_seq RESTART WITH 101;
 ALTER SEQUENCE lineup_id_seq RESTART WITH 101;
