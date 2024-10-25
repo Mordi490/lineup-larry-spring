@@ -2,6 +2,8 @@ package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
+import dev.mordi.lineuplarry.lineup_larry_backend.like.Like;
+import dev.mordi.lineuplarry.lineup_larry_backend.like.LikeRepository;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.Lineup;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupRepository;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
@@ -25,6 +27,9 @@ public class DevModeConfig {
     // TODO: report that no solid error was given on FF vs brave on cors err
     @Autowired
     LineupRepository lineupRepository;
+
+    @Autowired
+    LikeRepository likeRepository;
 
     @Bean
     public ApplicationRunner devModeRunner(Environment environment) {
@@ -70,7 +75,25 @@ public class DevModeConfig {
             lineupRepository.createLineup(new Lineup(null, Agent.CLOVE, Map.BIND, "titleFour", "bodyFour", 3L));
             lineupRepository.createLineup(new Lineup(null, Agent.JETT, Map.FRACTURE, "titleFour", "bodyFour", 3L));
 
-            // more to come
+
+            likeRepository.likeLineup(new Like(1L, 2L, null));
+            likeRepository.likeLineup(new Like(1L, 3L, null));
+            likeRepository.likeLineup(new Like(1L, 11L, null));
+            likeRepository.likeLineup(new Like(1L, 22L, null));
+            likeRepository.likeLineup(new Like(1L, 18L, null));
+            likeRepository.likeLineup(new Like(1L, 16L, null));
+            likeRepository.likeLineup(new Like(2L, 2L, null));
+            likeRepository.likeLineup(new Like(2L, 1L, null));
+            likeRepository.likeLineup(new Like(2L, 22L, null));
+            likeRepository.likeLineup(new Like(2L, 23L, null));
+            likeRepository.likeLineup(new Like(2L, 12L, null));
+            likeRepository.likeLineup(new Like(2L, 14L, null));
+            likeRepository.likeLineup(new Like(3L, 4L, null));
+            likeRepository.likeLineup(new Like(3L, 22L, null));
+            likeRepository.likeLineup(new Like(3L, 15L, null));
+            likeRepository.likeLineup(new Like(3L, 9L, null));
+            likeRepository.likeLineup(new Like(3L, 20L, null));
+            likeRepository.likeLineup(new Like(3L, 1L, null));
 
         };
     }

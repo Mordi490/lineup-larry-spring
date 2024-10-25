@@ -1,6 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import dev.mordi.lineuplarry.lineup_larry_backend.like.exceptions.InvalidLikeException;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import jakarta.validation.ConstraintViolationException;
@@ -91,6 +92,15 @@ public class GlobalExceptionController {
     public ProblemDetail handleUserNotFoundException(InvalidUserException.UserNotFoundException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
         problemDetail.setTitle("User not found");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(NOT_FOUND));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvalidLineupException.NoSuchLineupException.class)
+    public ProblemDetail handleNoSuchLineupException(InvalidLineupException.NoSuchLineupException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+        problemDetail.setTitle("Lineup not found");
         problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(NOT_FOUND));
         return problemDetail;
@@ -233,6 +243,15 @@ public class GlobalExceptionController {
         problemDetail.setTitle("Invalid search title");
         problemDetail.setProperty("time", Instant.now());
         problemDetail.setType(URI.create(BAD_REQUEST));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(InvalidLikeException.LikeNotFound.class)
+    public ProblemDetail handleNoSuchLikeException(InvalidLikeException.LikeNotFound e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+        problemDetail.setTitle("Like not found");
+        problemDetail.setProperty("time", Instant.now());
+        problemDetail.setType(URI.create(NOT_FOUND));
         return problemDetail;
     }
 }

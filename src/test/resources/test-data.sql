@@ -1,4 +1,4 @@
-TRUNCATE users, lineup;
+TRUNCATE users, lineup, likes;
 
 INSERT INTO users(id, username) VALUES
     (1, 'userOne'),
@@ -32,7 +32,7 @@ INSERT INTO lineup(id, agent, map, title, body, user_id) VALUES
     (22, 'GEKKO', 'BIND', 'titleFour', 'bodyFour', 3),
     (23, 'DEADLOCK', 'FRACTURE', 'titleFour', 'bodyFour', 3),
     (24, 'ISO', 'BIND', 'titleFour', 'bodyFour', 3),
-    (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3);
+    (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3),
     (26, 'JETT', 'FRACTURE', 'titleFour', 'bodyFour', 3);
 
  INSERT INTO likes(user_id, lineup_id) VALUES
