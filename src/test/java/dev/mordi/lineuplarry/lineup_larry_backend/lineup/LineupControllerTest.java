@@ -43,17 +43,17 @@ public class LineupControllerTest {
 
     private User userWithLineups;
     private User userWithNoLineups;
-    private Lineup lineupOne;
-    private Lineup lineupTwo;
-    private Lineup lineupWithSameTitleAsLineupOne;
+    private LineupWithAuthorDTO lineupOne;
+    private LineupWithAuthorDTO lineupTwo;
+    private LineupWithAuthorDTO lineupWithSameTitleAsLineupOne;
 
     @BeforeEach
     void setUp() {
         this.userWithLineups = new User(1L, "John");
         this.userWithNoLineups = new User(2L, "Jane");
-        this.lineupOne = new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L);
-        this.lineupTwo = new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineup title two", "lineup body two", 1L);
-        this.lineupWithSameTitleAsLineupOne = new Lineup(4L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L);
+        this.lineupOne = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, "John");
+        this.lineupTwo = new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineup title two", "lineup body two", 1L, "John");
+        this.lineupWithSameTitleAsLineupOne = new LineupWithAuthorDTO(4L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, "John");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class LineupControllerTest {
     @Test
     void getLineupsFromUserWithLineups() throws Exception {
         Long userId = lineupOne.userId();
-        Optional<List<Lineup>> userOnesLineups = Optional.of(List.of(lineupOne, lineupTwo));
+        Optional<List<LineupWithAuthorDTO>> userOnesLineups = Optional.of(List.of(lineupOne, lineupTwo));
         when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(userOnesLineups);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
@@ -127,7 +127,7 @@ public class LineupControllerTest {
     @Test
     void getLineupsFromUserWithNoLineups() throws Exception {
         Long userId = userWithNoLineups.id();
-        Optional<List<Lineup>> emptyArray = Optional.of(List.of());
+        Optional<List<LineupWithAuthorDTO>> emptyArray = Optional.of(List.of());
         when(lineupService.getAllLineupsFromUserId(userId, 20L, null)).thenReturn(emptyArray);
 
         mockMvc.perform(get("/api/lineups/user/{id}", userId))
@@ -226,9 +226,12 @@ public class LineupControllerTest {
         verify(lineupService).deleteLineup(lineupOne.id());
     }
 
+    // THINK: update should still be fine with just lineup and not dto
     @Test
     void failUpdateOnBlankTitle() throws Exception {
-        Lineup lineupWithBlankTitle = lineupOne.withTitle("  ");
+        Lineup lineupWithBlankTitle = new Lineup(
+                lineupOne.id(), lineupOne.agent(), lineupOne.map(), "  ", lineupOne.body(), lineupOne.userId());
+
         try {
             String lineupWithBlankTitleJson = om.writeValueAsString(lineupWithBlankTitle);
             var res = mockMvc.perform(put("/api/lineups/{id}", lineupWithBlankTitle.id())
@@ -248,7 +251,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnEmptyTitle() throws Exception {
-        Lineup lineupWithEmptyTitle = lineupOne.withTitle("");
+        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "", lineupOne.body(), lineupOne.userId());
 
         try {
             String lineupWithEmptyTitleJson = om.writeValueAsString(lineupWithEmptyTitle);
@@ -269,7 +272,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnBlankBody() throws Exception {
-        Lineup lineupWithEmptyTitle = lineupOne.withBody("   ");
+        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "   ", lineupOne.userId());
 
         try {
             String lineupWithEmptyTitleJson = om.writeValueAsString(lineupWithEmptyTitle);
@@ -290,7 +293,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnEmptyBody() throws Exception {
-        Lineup lineupWithEmptyBody = lineupOne.withBody("");
+        Lineup lineupWithEmptyBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "", lineupOne.userId());
 
         try {
             String lineupWithEmptyBodyJson = om.writeValueAsString(lineupWithEmptyBody);
@@ -311,7 +314,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnNullTitle() throws Exception {
-        Lineup lineupWithNullTitle = lineupOne.withTitle(null);
+        LineupWithAuthorDTO lineupWithNullTitle = lineupOne.withTitle(null);
 
         try {
             String lineupWithNullTitleJson = om.writeValueAsString(lineupWithNullTitle);
@@ -331,7 +334,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnNullBody() throws Exception {
-        Lineup lineupWithNullBody = lineupOne.withBody(null);
+        LineupWithAuthorDTO lineupWithNullBody = lineupOne.withBody(null);
 
         try {
             String lineupWithNullBodyJson = om.writeValueAsString(lineupWithNullBody);
@@ -353,10 +356,10 @@ public class LineupControllerTest {
     // lineupId's 4 and 5 have the tile: "same name"
     @Test
     void successfulGetByTitle() {
-        List<Lineup> mockedResult = Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne);
+        List<LineupWithAuthorDTO> mockedResult = Arrays.asList(lineupOne, lineupWithSameTitleAsLineupOne);
         when(lineupService.getByTitle("lineup title", 20L, null)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("lineup title", 20L, null);
+        List<LineupWithAuthorDTO> lineups = lineupService.getByTitle("lineup title", 20L, null);
 
         assertThat(lineups).isNotNull();
         assertThat(lineups.size()).isEqualTo(2);
@@ -365,10 +368,10 @@ public class LineupControllerTest {
 
     @Test
     void successfulGetByTitleNoMatches() {
-        List<Lineup> mockedResult = List.of();
+        List<LineupWithAuthorDTO> mockedResult = List.of();
         when(lineupService.getByTitle("bad search title", 20L, null)).thenReturn(mockedResult);
 
-        List<Lineup> lineups = lineupService.getByTitle("bad search title", 20L, null);
+        List<LineupWithAuthorDTO> lineups = lineupService.getByTitle("bad search title", 20L, null);
 
         assertThat(lineups.toArray()).isEmpty();
     }

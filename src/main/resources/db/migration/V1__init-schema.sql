@@ -68,3 +68,7 @@ CREATE TABLE IF NOT EXISTS
         liked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         PRIMARY KEY (user_id, lineup_id)
     );
+
+    -- TODO: groups
+
+    -- TODO: comments

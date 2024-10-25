@@ -17,7 +17,7 @@ public class LineupService {
         this.lineupRepository = lineupRepository;
     }
 
-    public List<Lineup> getLineup(String title, String agent, String map, Long pageSize, Long lastValue) {
+    public List<LineupWithAuthorDTO> getLineup(String title, String agent, String map, Long pageSize, Long lastValue) {
         validateTitle(title);
         Agent validatedAgent = validateAgent(agent);
         Map validatedMap = validateMap(map);
@@ -25,15 +25,15 @@ public class LineupService {
         return lineupRepository.getLineups(title, validatedAgent, validatedMap, pageSize, lastValue);
     }
 
-    public Optional<Lineup> getById(Long id) {
+    public Optional<LineupWithAuthorDTO> getById(Long id) {
         return lineupRepository.getLineupById(id);
     }
 
-    public Optional<List<Lineup>> getAllLineupsFromUserId(Long id, Long pageSize, Long lastValue) {
+    public Optional<List<LineupWithAuthorDTO>> getAllLineupsFromUserId(Long id, Long pageSize, Long lastValue) {
         return lineupRepository.getLineupsByUserId(id, pageSize, lastValue);
     }
 
-    public List<Lineup> getByTitle(String name, Long pageSize, Long lastValue) {
+    public List<LineupWithAuthorDTO> getByTitle(String name, Long pageSize, Long lastValue) {
         validateGetByTitleString(name);
         return lineupRepository.getLineups(name, null, null, pageSize, lastValue);
     }

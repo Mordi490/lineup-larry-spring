@@ -56,12 +56,13 @@ public class LineupRepository {
         return true;
     }
 
-    public Optional<Lineup> getLineupById(Long id) {
-        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+    public Optional<LineupWithAuthorDTO> getLineupById(Long id) {
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
                 .from(LINEUP)
+                .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                 .where(LINEUP.ID.eq(id))
                 .fetchOptional()
-                .map(mapping(Lineup::new));
+                .map(mapping(LineupWithAuthorDTO::new));
     }
 
     public void updateLineup(Lineup lineup) {
@@ -77,11 +78,20 @@ public class LineupRepository {
     }
 
     public void deleteLineup(Long id) {
+        boolean exists = dsl.fetchExists(
+                selectFrom(LINEUP)
+                        .where(LINEUP.ID.eq(id))
+        );
+
+        if (!exists) {
+            throw new InvalidLineupException.NoSuchLineupException(id);
+        }
+
         dsl.deleteFrom(LINEUP).where(LINEUP.ID.eq(id)).execute();
     }
 
     // fetches all the lineups from a given user
-    public Optional<List<Lineup>> getLineupsByUserId(Long userId, Long pageSize, Long lastValue) {
+    public Optional<List<LineupWithAuthorDTO>> getLineupsByUserId(Long userId, Long pageSize, Long lastValue) {
         boolean exists = doesUserExist(userId, false);
 
         if (!exists) {
@@ -89,25 +99,27 @@ public class LineupRepository {
         }
 
         if (lastValue != null) {
-            List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+            List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
                     .from(LINEUP)
+                    .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                     .where(LINEUP.USER_ID.eq(userId))
                     .orderBy(LINEUP.ID.asc())
                     .seek(lastValue)
                     .limit(pageSize)
                     .fetch()
-                    .map(mapping(Lineup::new));
+                    .map(mapping(LineupWithAuthorDTO::new));
 
             return Optional.of(lineups);
         }
 
-        List<Lineup> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
+        List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
                 .from(LINEUP)
+                .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                 .where(LINEUP.USER_ID.eq(userId))
                 .orderBy(LINEUP.ID.asc())
                 .limit(pageSize)
                 .fetch()
-                .map(mapping(Lineup::new));
+                .map(mapping(LineupWithAuthorDTO::new));
 
         return Optional.of(lineups);
     }
@@ -125,9 +137,11 @@ public class LineupRepository {
     }
 
     // TODO: Set a limit on pageSize
-    public List<Lineup> getLineups(String title, Agent agent, Map map, Long pageSize, Long lastValue) {
-        var baseQuery = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID)
-                .from(LINEUP);
+    public List<LineupWithAuthorDTO> getLineups(String title, Agent agent, Map map, Long pageSize, Long lastValue) {
+        var baseQuery = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
+                .from(LINEUP)
+                .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID));
+
 
         Condition conditions = DSL.noCondition();
         if (title != null) {
@@ -146,13 +160,13 @@ public class LineupRepository {
                     .orderBy(LINEUP.ID.asc())
                     .seek(lastValue)
                     .limit(pageSize)
-                    .fetchInto(Lineup.class);
+                    .fetchInto(LineupWithAuthorDTO.class);
         }
 
         return baseQuery
                 .where(conditions)
                 .orderBy(LINEUP.ID.asc())
                 .limit(pageSize)
-                .fetchInto(Lineup.class);
+                .fetchInto(LineupWithAuthorDTO.class);
     }
 }

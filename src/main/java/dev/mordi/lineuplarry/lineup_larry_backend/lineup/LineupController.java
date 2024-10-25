@@ -27,7 +27,7 @@ public class LineupController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Lineup>> getLineups(
+    public ResponseEntity<List<LineupWithAuthorDTO>> getLineups(
             @RequestParam(required = false)
             @Size(min = 3, max = 40, message = "Title must be between {min} and {max} characters")
             String title,
@@ -41,13 +41,13 @@ public class LineupController {
             @RequestParam(required = false)
             Optional<Long> lastValue
     ) {
-        List<Lineup> lineups = lineupService.getLineup(title, agent, map, pageSize, lastValue.orElse(null));
+        List<LineupWithAuthorDTO> lineups = lineupService.getLineup(title, agent, map, pageSize, lastValue.orElse(null));
         return new ResponseEntity<>(lineups, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Lineup> getById(@PathVariable Long id) {
-        Optional<Lineup> lineup = lineupService.getById(id);
+    public ResponseEntity<LineupWithAuthorDTO> getById(@PathVariable Long id) {
+        Optional<LineupWithAuthorDTO> lineup = lineupService.getById(id);
         return lineup.map(ResponseEntity::ok)
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -63,6 +63,7 @@ public class LineupController {
         lineupService.updateLineup(id, lineup);
     }
 
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLineup(@PathVariable Long id) {
@@ -71,13 +72,13 @@ public class LineupController {
 
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<Lineup>> getAllLineupsFromUser(
+    public ResponseEntity<List<LineupWithAuthorDTO>> getAllLineupsFromUser(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "20")
             Long pageSize,
             @RequestParam(required = false)
             Optional<Long> lastValue) {
-        Optional<List<Lineup>> lineups = lineupService.getAllLineupsFromUserId(id, pageSize, lastValue.orElse(null));
+        Optional<List<LineupWithAuthorDTO>> lineups = lineupService.getAllLineupsFromUserId(id, pageSize, lastValue.orElse(null));
 
         return lineups.map(ResponseEntity::ok)
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));

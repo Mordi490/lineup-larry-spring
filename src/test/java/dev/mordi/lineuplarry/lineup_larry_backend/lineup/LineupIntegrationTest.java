@@ -48,7 +48,7 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulGetAll() {
-        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups",
                 HttpMethod.GET,
                 null,
@@ -56,27 +56,27 @@ public class LineupIntegrationTest {
                 }
         );
 
-        List<Lineup> expectedArray = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
-                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(7L, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L),
-                new Lineup(8L, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L),
-                new Lineup(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L),
-                new Lineup(10L, Agent.PHOENIX, Map.LOTUS, "cheeky flash", "then click heads", 1L),
-                new Lineup(11L, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L),
-                new Lineup(12L, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L),
-                new Lineup(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L),
-                new Lineup(14L, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L),
-                new Lineup(15L, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L),
-                new Lineup(16L, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L),
-                new Lineup(17L, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L),
-                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L),
-                new Lineup(19L, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L),
-                new Lineup(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedArray = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(7L, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L, "userThree"),
+                new LineupWithAuthorDTO(8L, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L, "userOne"),
+                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, "userTwo"),
+                new LineupWithAuthorDTO(10L, Agent.PHOENIX, Map.LOTUS, "cheeky flash", "then click heads", 1L, "userOne"),
+                new LineupWithAuthorDTO(11L, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L, "userThree"),
+                new LineupWithAuthorDTO(12L, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L, "userThree"),
+                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(14L, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(15L, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(16L, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(17L, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(19L, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -87,7 +87,7 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulSearchByTitleWithMatches() {
-        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups?title=same+name",
                 HttpMethod.GET,
                 null,
@@ -95,9 +95,9 @@ public class LineupIntegrationTest {
                 }
         );
 
-        List<Lineup> expectedArray = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedArray = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -138,7 +138,7 @@ public class LineupIntegrationTest {
     // getByID
     @Test
     void successfulGetById() {
-        ResponseEntity<Optional<Lineup>> res = restTemplate.exchange(
+        ResponseEntity<Optional<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.GET,
                 null,
@@ -146,7 +146,7 @@ public class LineupIntegrationTest {
                 }
         );
 
-        Lineup expectedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L);
+        LineupWithAuthorDTO expectedLineup = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne");
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
@@ -170,7 +170,7 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulGetAllLineupsFromUser() {
-        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups/user/2",
                 HttpMethod.GET,
                 null,
@@ -179,10 +179,10 @@ public class LineupIntegrationTest {
         );
 
         // user 2 has lineups, 2 and 3:
-        List<Lineup> expectedLineups = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
-                new Lineup(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L)
+        List<LineupWithAuthorDTO> expectedLineups = List.of(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
+                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, "userTwo")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -194,7 +194,7 @@ public class LineupIntegrationTest {
     @Test
     void successfulGetAllLineupsFromUserWithoutLineups() {
         // in test-data.sql user 4 and 5 have no lineups
-        ResponseEntity<List<Lineup>> res = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups/user/4",
                 HttpMethod.GET,
                 null,
@@ -430,16 +430,20 @@ public class LineupIntegrationTest {
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNull();
 
-        ResponseEntity<Optional<Lineup>> res2 = restTemplate.exchange(
+        ResponseEntity<Optional<LineupWithAuthorDTO>> res2 = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Optional<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
         assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res2.getBody().get()).isEqualTo(updatedLineup);
+        assertThat(res2.getBody()).isPresent();
+        assertThat(res2.getBody().get())
+                .usingRecursiveComparison()
+                .ignoringFields("authorUsername")
+                .isEqualTo(updatedLineup);
     }
 
     @Test
@@ -623,6 +627,21 @@ public class LineupIntegrationTest {
         assertThat(res.getBody()).isNull();
     }
 
+    @Test
+    void deleteOnNonexistentLineup() {
+        ResponseEntity<String> res = restTemplate.exchange(
+                "/api/lineups/999",
+                HttpMethod.DELETE,
+                null,
+                String.class
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).isNotNull();
+        assertThat(res.getBody()).contains("No lineup with id: '999' exists");
+
+    }
+
     // unsuccessfully delete TODO: once auth has been impl
     void failDeleteOnInvalidAuth() {
     }
@@ -630,7 +649,7 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSovaLineups() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=sova",
                 HttpMethod.GET,
                 new HttpEntity<>(null, headers),
@@ -638,9 +657,9 @@ public class LineupIntegrationTest {
                 }
         );
 
-        List<Lineup> expectedResult = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedResult = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -663,7 +682,7 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSunsetLineups() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=sunset",
                 HttpMethod.GET,
                 null,
@@ -671,9 +690,9 @@ public class LineupIntegrationTest {
                 }
         );
 
-        List<Lineup> expectedResult = List.of(
-                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
-                new Lineup(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedResult = List.of(
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -711,7 +730,7 @@ public class LineupIntegrationTest {
     @Test
     void getAllLineupsFromAgentWithoutLineups() {
         ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups?agent=jett",
+                "/api/lineups?agent=reyna",
                 HttpMethod.GET,
                 null,
                 String.class
@@ -752,11 +771,11 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupsFromAgentMapAndTitleWithNoMatches() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=pearl&agent=jett&title=nope",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
@@ -767,17 +786,17 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSovaLineupsOnAscent() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=sova&map=ascent",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedLineups = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedLineups = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -787,16 +806,16 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllAscentMapsWithSpecificTitle() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=ascent&title=lineupTwo",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedResult = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L));
+        List<LineupWithAuthorDTO> expectedResult = List.of(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
@@ -805,16 +824,16 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSovaLineupsWithSpecificTitle() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=sova&title=lineupTwo",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = Collections.singletonList(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedList = Collections.singletonList(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -824,16 +843,16 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupByAgentMapAndTitle() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=brimstone&map=bind&title=lineupThree",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedLineup = List.of(
-                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L)
+        List<LineupWithAuthorDTO> expectedLineup = List.of(
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -871,16 +890,16 @@ public class LineupIntegrationTest {
     // expect to get just the first lineup
     @Test
     void successfulGetByTitlePaginationSmallPageSize() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?title=same+name&pageSize=1",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedResult = Collections.singletonList(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedResult = Collections.singletonList(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -892,17 +911,17 @@ public class LineupIntegrationTest {
     // TODO: standardize these betters
     @Test
     void successfulGetByTitlePagination() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?title=same+name&pageSize=3",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedResult = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedResult = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -913,16 +932,16 @@ public class LineupIntegrationTest {
     // expect to get the last same name lineup
     @Test
     void successfulGetByTitlePaginationSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?title=same+name&pageSize=1&lastValue=5",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedResult = Collections.singletonList(
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedResult = Collections.singletonList(
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -933,17 +952,17 @@ public class LineupIntegrationTest {
     // findByAgentPaginated
     @Test
     void successfulFindByAgentPagination() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=sova",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -953,16 +972,16 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByAgentPaginationSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=sova&pageSize=1&lastValue=1",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -973,18 +992,18 @@ public class LineupIntegrationTest {
     // findByMapPaginated
     @Test
     void successfulFindByMapPagination() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=ascent",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -994,17 +1013,17 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByMapPaginationSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=ascent&lastValue=1",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1015,18 +1034,18 @@ public class LineupIntegrationTest {
     // findByAgentAndMapPaginated
     @Test
     void successfulFindByAgentAntMapPagination() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=ascent",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L),
-                new Lineup(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1036,16 +1055,16 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByAgentAndMapPaginationSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=ascent&agent=sova&lastValue=1",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1056,17 +1075,17 @@ public class LineupIntegrationTest {
     // findByMapAndTitlePaginated
     @Test
     void successfulFindByMapAndTitlePaginated() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=icebox&title=same+name",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1076,16 +1095,16 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByMapAndTitlePaginatedSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=icebox&title=same+name&lastValue=5",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1096,17 +1115,17 @@ public class LineupIntegrationTest {
     // findByAgentAndTitlePaginated
     @Test
     void findByAgentAndTitlePaginated() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=killjoy&title=same+name",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1116,16 +1135,16 @@ public class LineupIntegrationTest {
 
     @Test
     void findByAgentAndTitlePaginatedSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=killjoy&title=same+name&lastValue=5",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1136,17 +1155,17 @@ public class LineupIntegrationTest {
     // findByAgentAndMapAndTitlePaginated
     @Test
     void findByAgentAndMapAndTitlePaginated() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?agent=killjoy&map=icebox&title=same+name",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedLineup = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedLineup = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1176,17 +1195,17 @@ public class LineupIntegrationTest {
     // getAllLineupsPaginated
     @Test
     void getAllLineupsPaginated() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?pageSize=2",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L),
-                new Lineup(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1196,17 +1215,17 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupsPaginatedSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?pageSize=2&lastValue=2",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L),
-                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1217,17 +1236,17 @@ public class LineupIntegrationTest {
     // getByAuthor
     @Test
     void getAllLineupsFromAuthorPageSized() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups/user/3?pageSize=2",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L),
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1237,17 +1256,17 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupsFromAuthorPageSizedSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups/user/3?pageSize=2&lastValue=4",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
 
-        List<Lineup> expectedList = List.of(
-                new Lineup(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L),
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+        List<LineupWithAuthorDTO> expectedList = List.of(
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -1287,11 +1306,11 @@ public class LineupIntegrationTest {
     // seeking on "bad" values, ie does not exist or the seek value does not fit the query criteria
     @Test
     void failPaginationOnNonexistentLineup() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
+        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
                 "/api/lineups?map=pearl&agent=vyse&lastValue=999",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Lineup>>() {
+                new ParameterizedTypeReference<>() {
                 }
         );
         // JOOQ does not throw an error, it just returns an empty list, which we'll deem as fine and return it as well
