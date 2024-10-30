@@ -11,6 +11,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.OffsetDateTime;
+
 public record Lineup(
         @Nullable
         Long id,
@@ -34,29 +36,35 @@ public record Lineup(
         String body,
 
         @NotNull(message = "userId cannot be null")
-        Long userId) {
+        Long userId,
+
+        @Nullable
+        OffsetDateTime createdAt,
+
+        @Nullable
+        OffsetDateTime updatedAt) {
 
     public Lineup withTitle(String newTitle) {
-        return new Lineup(this.id, this.agent, this.map, newTitle, this.body, this.userId);
+        return new Lineup(this.id, this.agent, this.map, newTitle, this.body, this.userId, this.createdAt, this.updatedAt);
     }
 
     public Lineup withAgent(Agent newAgent) {
-        return new Lineup(this.id, newAgent, this.map, this.title, this.body, this.userId);
+        return new Lineup(this.id, newAgent, this.map, this.title, this.body, this.userId, this.createdAt, this.updatedAt);
     }
 
     public Lineup withMap(Map newMap) {
-        return new Lineup(this.id, this.agent, newMap, this.title, this.body, this.userId);
+        return new Lineup(this.id, this.agent, newMap, this.title, this.body, this.userId, this.createdAt, this.updatedAt);
     }
 
     public Lineup withBody(String newBody) {
-        return new Lineup(this.id, this.agent, this.map, this.title, newBody, this.userId);
+        return new Lineup(this.id, this.agent, this.map, this.title, newBody, this.userId, this.createdAt, this.updatedAt);
     }
 
     public Lineup withUserId(Long newUserId) {
-        return new Lineup(this.id, this.agent, this.map, this.title, this.body, newUserId);
+        return new Lineup(this.id, this.agent, this.map, this.title, this.body, newUserId, this.createdAt, this.updatedAt);
     }
 
     public Lineup withId(Long newId) {
-        return new Lineup(newId, this.agent, this.map, this.title, this.body, this.userId);
+        return new Lineup(newId, this.agent, this.map, this.title, this.body, this.userId, this.createdAt, this.updatedAt);
     }
 }
