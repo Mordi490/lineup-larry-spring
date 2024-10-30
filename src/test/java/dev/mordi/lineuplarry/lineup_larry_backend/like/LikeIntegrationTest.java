@@ -43,7 +43,6 @@ public class LikeIntegrationTest {
     }
 
     // test getAll endpoint
-    // TODO: consider testing the timestamp with time zone vs OffsetDateTime
     @Test
     void successGetAllLikes() {
         ResponseEntity<List<Like>> res = restTemplate.exchange(
@@ -72,7 +71,10 @@ public class LikeIntegrationTest {
                 new Like(3L, 15L, null),
                 new Like(3L, 9L, null),
                 new Like(3L, 20L, null),
-                new Like(3L, 1L, null)
+                new Like(3L, 1L, null),
+                new Like(2L, 20L, null),
+                new Like(4L, 9L, null),
+                new Like(4L, 22L, null)
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -128,7 +130,6 @@ public class LikeIntegrationTest {
         assertThat(res2.getBody()).isEqualTo(res.getBody().get());
     }
 
-    // TODO: fuck the club up, yerrrr
     // test getting a like by id
     @Test
     void getNonexistentLikeById() {
@@ -174,8 +175,6 @@ public class LikeIntegrationTest {
         assertThat(res.getBody()).contains("The like between userId: '2' and lineupId '999' does not exist");
     }
 
-    // TODO: tests for
-    // getLikesByUser
     @Test
     void successfulGetLikesByUser() {
         ResponseEntity<List<Like>> res = restTemplate.exchange(
@@ -192,7 +191,8 @@ public class LikeIntegrationTest {
                 new Like(2L, 22L, null),
                 new Like(2L, 23L, null),
                 new Like(2L, 12L, null),
-                new Like(2L, 14L, null)
+                new Like(2L, 14L, null),
+                new Like(2L, 20L, null)
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -57,32 +57,35 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedArray = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
-                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(7L, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L, "userThree"),
-                new LineupWithAuthorDTO(8L, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L, "userOne"),
-                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, "userTwo"),
-                new LineupWithAuthorDTO(10L, Agent.PHOENIX, Map.LOTUS, "cheeky flash", "then click heads", 1L, "userOne"),
-                new LineupWithAuthorDTO(11L, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L, "userThree"),
-                new LineupWithAuthorDTO(12L, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L, "userThree"),
-                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(14L, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(15L, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(16L, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(17L, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(19L, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(7L, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(8L, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(10L, Agent.PHOENIX, Map.LOTUS, "cheeky flash", "then click heads", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(11L, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(12L, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(14L, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(15L, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(16L, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(17L, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(19L, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(expectedArray.size());
-        assertThat(res.getBody().stream().toList()).isEqualTo(expectedArray);
+        assertThat(res.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedArray);
     }
 
     @Test
@@ -96,14 +99,17 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedArray = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(2);
-        assertThat(res.getBody().stream().toList()).isEqualTo(expectedArray);
+        assertThat(res.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedArray);
     }
 
     // Reconsider if this is even a good practice
@@ -146,12 +152,15 @@ public class LineupIntegrationTest {
                 }
         );
 
-        LineupWithAuthorDTO expectedLineup = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne");
+        LineupWithAuthorDTO expectedLineup = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne");
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody()).isPresent();
-        assertThat(res.getBody().get()).isEqualTo(expectedLineup);
+        assertThat(res.getBody().get())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineup);
     }
 
     @Test
@@ -180,15 +189,18 @@ public class LineupIntegrationTest {
 
         // user 2 has lineups, 2 and 3:
         List<LineupWithAuthorDTO> expectedLineups = List.of(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
-                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, "userTwo")
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, null, null, "userTwo")
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().size()).isEqualTo(expectedLineups.size());
-        assertThat(res.getBody().stream().toList()).isEqualTo(expectedLineups);
+        assertThat(res.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineups);
     }
 
     @Test
@@ -223,7 +235,7 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulCreateLineup() {
-        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "lineup to create", "body to create", 2L);
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "lineup to create", "body to create", 2L, null, null);
 
         ResponseEntity<Lineup> res = restTemplate.postForEntity(
                 "/api/lineups",
@@ -418,7 +430,7 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulUpdate() {
-        Lineup updatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
+        Lineup updatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -442,13 +454,13 @@ public class LineupIntegrationTest {
         assertThat(res2.getBody()).isPresent();
         assertThat(res2.getBody().get())
                 .usingRecursiveComparison()
-                .ignoringFields("authorUsername")
+                .ignoringFields("authorUsername", "createdAt", "updatedAt")
                 .isEqualTo(updatedLineup);
     }
 
     @Test
     void failUpdateOnNullLineupId() {
-        Lineup badUpdatedLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
+        Lineup badUpdatedLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -464,7 +476,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnNullTitle() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, null, "updated body", 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, null, "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -480,7 +492,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnNullBody() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", null, 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", null, 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -496,7 +508,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnBlankTitle() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "  ", "updated body", 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "  ", "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -512,7 +524,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnBlankBody() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "  ", 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "  ", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -528,7 +540,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnEmptyTitle() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "", "updated body", 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "", "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -544,7 +556,7 @@ public class LineupIntegrationTest {
 
     @Test
     void failUpdateOnEmptyBody() {
-        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "", 1L);
+        Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -597,7 +609,7 @@ public class LineupIntegrationTest {
     // note the user has to be owner of the lineup we're updating
     @Test
     void failUpdateOnChangedId() {
-        Lineup badUpdatedLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L);
+        Lineup badUpdatedLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L, null, null);
 
         ResponseEntity<String> res = restTemplate.exchange(
                 "/api/lineups/1",
@@ -658,13 +670,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEqualTo(expectedResult);
+        assertThat(response.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     @Test
@@ -691,13 +706,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEqualTo(expectedResult);
+        assertThat(response.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     @Test
@@ -795,13 +813,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedLineups = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEqualTo(expectedLineups);
+        assertThat(response.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineups);
     }
 
     @Test
@@ -815,11 +836,14 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"));
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedResult);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     @Test
@@ -833,12 +857,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = Collections.singletonList(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -852,12 +879,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedLineup = List.of(
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo")
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEqualTo(expectedLineup);
+        assertThat(response.getBody().stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineup);
     }
 
     @Test
@@ -899,12 +929,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = Collections.singletonList(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedResult);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // expect to get exactly the 2 same name lineups
@@ -920,13 +953,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedResult);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // expect to get the last same name lineup
@@ -941,12 +977,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedResult = Collections.singletonList(
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedResult);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // findByAgentPaginated
@@ -961,13 +1000,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -981,12 +1023,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // findByMapPaginated
@@ -1001,14 +1046,17 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
-                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1022,13 +1070,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
-                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // findByAgentAndMapPaginated
@@ -1043,14 +1094,17 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo"),
-                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1064,12 +1118,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // findByMapAndTitlePaginated
@@ -1084,13 +1141,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1104,12 +1164,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // findByAgentAndTitlePaginated
@@ -1124,13 +1187,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1144,12 +1210,15 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // findByAgentAndMapAndTitlePaginated
@@ -1164,13 +1233,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedLineup = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedLineup);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineup);
     }
 
     @Test
@@ -1184,12 +1256,15 @@ public class LineupIntegrationTest {
         );
 
         List<Lineup> expectedLineup = List.of(
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L)
+                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null)
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedLineup);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineup);
     }
 
     // getAllLineupsPaginated
@@ -1204,13 +1279,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, "userOne"),
-                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, "userTwo")
+                new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L, null, null, "userOne"),
+                new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1224,13 +1302,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
-                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     // getByAuthor
@@ -1245,13 +1326,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test
@@ -1265,13 +1349,16 @@ public class LineupIntegrationTest {
         );
 
         List<LineupWithAuthorDTO> expectedList = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).isEqualTo(expectedList);
+        assertThat(response.getBody())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedList);
     }
 
     @Test

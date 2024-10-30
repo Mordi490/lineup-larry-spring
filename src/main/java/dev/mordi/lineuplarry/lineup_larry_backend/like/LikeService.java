@@ -20,7 +20,6 @@ public class LikeService {
 
     // TODO: consider any form of validations after applying some @BeanValidation
     public Optional<Like> getById(Long userId, Long lineupId) {
-        // TODO: revisit this and think about this
         Like like = new Like(userId, lineupId, null);
         return likeRepository.getLikeById(like.userId(), like.lineupId());
     }

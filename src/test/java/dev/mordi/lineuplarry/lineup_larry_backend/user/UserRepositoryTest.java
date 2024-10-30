@@ -1,6 +1,7 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
 
+import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupIdTitleDTO;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,5 +114,63 @@ public class UserRepositoryTest {
         assertThat(userWithLineups).isPresent();
 
         userRepository.deleteUser(2L);
+    }
+
+    // getUserSummary
+    @Test
+    void successfulGetUserSummary() {
+        UserSummaryDTO userSummary = userRepository.getUserSummary(3L);
+
+        // expected Data:
+        List<LineupIdTitleDTO> recentlyCreatedLineups = List.of(
+                new LineupIdTitleDTO(22L, "titleFour"),
+                new LineupIdTitleDTO(23L, "titleFour"),
+                new LineupIdTitleDTO(24L, "titleFour"),
+                new LineupIdTitleDTO(25L, "titleFour"),
+                new LineupIdTitleDTO(26L, "titleFour")
+        );
+
+        List<LineupIdTitleDTO> mostLikedLineups = List.of(
+                new LineupIdTitleDTO(22L, "titleFour"),
+                new LineupIdTitleDTO(20L, "titleFour"),
+                new LineupIdTitleDTO(14L, "titleFour"),
+                new LineupIdTitleDTO(11L, "sick pop flash"),
+                new LineupIdTitleDTO(4L, "lineupFour")
+        );
+
+        List<LineupIdTitleDTO> recentlyLikedLineups = List.of(
+                new LineupIdTitleDTO(1L, "lineupOne"),
+                new LineupIdTitleDTO(20L, "titleFour"),
+                new LineupIdTitleDTO(9L, "teleport thingy"),
+                new LineupIdTitleDTO(15L, "titleFour"),
+                new LineupIdTitleDTO(22L, "titleFour")
+        );
+
+        UserSummaryDTO expectedResult = new UserSummaryDTO(3L, "userThree",
+                recentlyCreatedLineups,
+                mostLikedLineups,
+                recentlyLikedLineups);
+
+        assertThat(userSummary).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void getUserSummaryOnUserWithNoData() {
+        UserSummaryDTO userSummaryDTO = userRepository.getUserSummary(5L);
+
+        List<LineupIdTitleDTO> emptyList = List.of();
+
+        assertThat(userSummaryDTO.userId()).isEqualTo(5L);
+        assertThat(userSummaryDTO.username()).isEqualTo("userFive");
+        assertThat(userSummaryDTO.recentLineups()).isEqualTo(emptyList);
+        assertThat(userSummaryDTO.mostLikedLineups()).isEqualTo(emptyList);
+        assertThat(userSummaryDTO.recentlyLikedLineups()).isEqualTo(emptyList);
+    }
+
+    @Test
+    void getUserSummaryOnNonexistentUser() {
+        assertThrows(InvalidUserException.UserNotFoundException.class, () -> {
+            userRepository.getUserSummary(999L);
+        });
     }
 }

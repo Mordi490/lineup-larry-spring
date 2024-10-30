@@ -39,6 +39,10 @@ public class UserService {
         userRepository.deleteUser(id);
     }
 
+    public UserSummaryDTO getUserSummary(Long userId) {
+        return userRepository.getUserSummary(userId);
+    }
+
     // Should
     private void validateCreateUserData(User user) {
         validateIdForCreate(user.id());

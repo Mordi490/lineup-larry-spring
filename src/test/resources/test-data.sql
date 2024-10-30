@@ -28,32 +28,39 @@ INSERT INTO lineup(id, agent, map, title, body, user_id) VALUES
     (18, 'KAYO', 'ASCENT', 'titleFour', 'bodyFour', 3),
     (19, 'NEON', 'FRACTURE', 'titleFour', 'bodyFour', 3),
     (20, 'FADE', 'LOTUS', 'titleFour', 'bodyFour', 3),
-    (21, 'HARBOR', 'FRACTURE', 'titleFour', 'bodyFour', 3),
-    (22, 'GEKKO', 'BIND', 'titleFour', 'bodyFour', 3),
-    (23, 'DEADLOCK', 'FRACTURE', 'titleFour', 'bodyFour', 3),
-    (24, 'ISO', 'BIND', 'titleFour', 'bodyFour', 3),
-    (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3),
-    (26, 'JETT', 'FRACTURE', 'titleFour', 'bodyFour', 3);
+    (21, 'HARBOR', 'FRACTURE', 'titleFour', 'bodyFour', 3);
 
- INSERT INTO likes(user_id, lineup_id) VALUES
-    (1, 2),
-    (1, 3),
-    (1, 11),
-    (1, 22),
-    (1,18),
-    (1, 16),
-    (2, 2),
-    (2, 1),
-    (2, 22),
-    (2, 23),
-    (2, 12),
-    (2, 14),
-    (3, 4),
-    (3, 22),
-    (3, 15),
-    (3, 9),
-    (3, 20),
-    (3, 1);
+   -- some values with a non-default createdAt and updatedAt
+   INSERT INTO lineup(id, agent, map, title, body, user_id, created_at, updated_at) VALUES
+       (22, 'GEKKO', 'BIND', 'titleFour', 'bodyFour', 3, '2003-11-28 19:05:46+00', '2077-11-28 19:05:46+00'),
+       (23, 'DEADLOCK', 'FRACTURE', 'titleFour', 'bodyFour', 3, '2004-07-04 18:09:55+00', '2077-07-04 18:09:55+00'),
+       (24, 'ISO', 'BIND', 'titleFour', 'bodyFour', 3, '2005-06-14 22:07:28+00', '2077-06-14 22:07:28+00'),
+       (25, 'CLOVE', 'BIND', 'titleFour', 'bodyFour', 3, '2006-04-10 14:01:42+00', '2077-04-10 14:01:42+00'),
+       (26, 'JETT', 'FRACTURE', 'titleFour', 'bodyFour', 3, '2007-03-04 04:02:44+00', '2077-03-04 04:02:44+00');
+
+ INSERT INTO likes(user_id, lineup_id, created_at) VALUES
+    (1, 2, '2023-01-15 14:23:00+01'),
+    (1, 3, '2023-02-10 08:45:30+01'),
+    (1, 11, '2023-03-05 18:12:15+01'),
+    (1, 22, '2023-04-20 11:07:45+01'),
+    (1, 18, '2023-05-18 21:30:20+01'),
+    (1, 16, '2023-06-12 03:55:10+01'),
+    (2, 2, '2023-07-07 17:25:00+01'),
+    (2, 1, '2023-08-22 09:10:05+01'),
+    (2, 22, '2023-09-16 14:42:00+01'),
+    (2, 23, '2023-10-03 06:35:40+01'),
+    (2, 12, '2023-11-12 15:15:30+01'),
+    (2, 14, '2023-12-08 23:50:10+01'),
+    (3, 4, '2024-01-22 08:05:20+01'),
+    (3, 22, '2024-02-13 13:25:00+01'),
+    (3, 15, '2024-03-10 04:45:30+01'),
+    (3, 9, '2024-04-05 16:10:10+01'),
+    (3, 20, '2024-05-02 19:30:50+01'),
+    (3, 1, '2024-06-15 10:55:25+01'),
+
+    (2, 20, '2024-06-15 10:55:25+01'),
+    (4, 9, '2024-06-15 10:55:25+01'),
+    (4, 22 ,'2024-06-15 10:55:25+01');
 
 ALTER SEQUENCE users_id_seq RESTART WITH 101;
 ALTER SEQUENCE lineup_id_seq RESTART WITH 101;

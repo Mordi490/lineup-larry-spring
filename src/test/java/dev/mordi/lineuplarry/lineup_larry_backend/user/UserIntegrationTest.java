@@ -1,5 +1,6 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
+import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupIdTitleDTO;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -349,4 +350,77 @@ public class UserIntegrationTest {
         assertThat(res.getBody()).contains("User with id: '222' was not found");
     }
     // unsuccessful delete TODO: once auth has been impl
+
+    // getUserSummary
+    @Test
+    void successfulGetUserSummary() {
+        ResponseEntity<UserSummaryDTO> res = restTemplate.exchange(
+                "/api/users/summary/3",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        // expeceted resutls:
+        List<LineupIdTitleDTO> recentlyCreatedLineups = List.of(
+                new LineupIdTitleDTO(22L, "titleFour"),
+                new LineupIdTitleDTO(23L, "titleFour"),
+                new LineupIdTitleDTO(24L, "titleFour"),
+                new LineupIdTitleDTO(25L, "titleFour"),
+                new LineupIdTitleDTO(26L, "titleFour")
+        );
+
+        List<LineupIdTitleDTO> mostLikedLineups = List.of(
+                new LineupIdTitleDTO(22L, "titleFour"),
+                new LineupIdTitleDTO(20L, "titleFour"),
+                new LineupIdTitleDTO(14L, "titleFour"),
+                new LineupIdTitleDTO(11L, "sick pop flash"),
+                new LineupIdTitleDTO(4L, "lineupFour")
+        );
+
+        List<LineupIdTitleDTO> recentlyLikedLineups = List.of(
+                new LineupIdTitleDTO(1L, "lineupOne"),
+                new LineupIdTitleDTO(20L, "titleFour"),
+                new LineupIdTitleDTO(9L, "teleport thingy"),
+                new LineupIdTitleDTO(15L, "titleFour"),
+                new LineupIdTitleDTO(22L, "titleFour")
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody().userId()).isEqualTo(3);
+        assertThat(res.getBody().recentLineups()).isEqualTo(recentlyCreatedLineups);
+        assertThat(res.getBody().mostLikedLineups()).isEqualTo(mostLikedLineups);
+        assertThat(res.getBody().recentlyLikedLineups()).isEqualTo(recentlyLikedLineups);
+    }
+
+    @Test
+    void getUserSummaryOnUserWithNoData() {
+        ResponseEntity<UserSummaryDTO> res = restTemplate.exchange(
+                "/api/users/summary/5",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody().username()).isEqualTo("userFive");
+        assertThat(res.getBody().userId()).isEqualTo(5);
+        assertThat(res.getBody().recentLineups()).isEmpty();
+        assertThat(res.getBody().mostLikedLineups()).isEmpty();
+        assertThat(res.getBody().recentlyLikedLineups()).isEmpty();
+    }
+
+    @Test
+    void getUserSummaryOnNonexistentUser() {
+        ResponseEntity<String> res = restTemplate.exchange(
+                "/api/users/summary/999",
+                HttpMethod.GET,
+                null,
+                String.class
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }

@@ -48,7 +48,6 @@ public class LikeController {
         return likeService.getLikesByUser(userId);
     }
 
-    // TODO: give this a better name
     @GetMapping("/lineup/{lineupId}")
     public List<Like> getLikesByLineup(@PathVariable Long lineupId) {
         return likeService.getLikesByLineup(lineupId);

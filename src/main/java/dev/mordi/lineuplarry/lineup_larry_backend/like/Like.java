@@ -10,4 +10,3 @@ public record Like(
         @Nullable
         OffsetDateTime createdAt) {
 }
-// TODO: cont with the controller, service and repo ++ tests

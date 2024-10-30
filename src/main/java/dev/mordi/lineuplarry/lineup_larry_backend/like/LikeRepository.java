@@ -28,7 +28,7 @@ public class LikeRepository {
     }
 
     public Optional<Like> getLikeById(Long lineupId, Long userId) {
-        return dsl.select(LIKES.LINEUP_ID, LIKES.USER_ID, LIKES.LIKED_AT)
+        return dsl.select(LIKES.LINEUP_ID, LIKES.USER_ID, LIKES.CREATED_AT)
                 .from(LIKES)
                 .where(LIKES.USER_ID.eq(userId)).and(
                         LIKES.LINEUP_ID.eq(lineupId)
@@ -88,7 +88,6 @@ public class LikeRepository {
                 ).execute();
     }
 
-    // TODO: do these, then tests
     public List<Like> getLikesByUser(Long userId) {
         // confirm that user exist(?)
         boolean exists = dsl.fetchExists(
@@ -102,13 +101,12 @@ public class LikeRepository {
 
         return dsl.selectFrom(LIKES)
                 .where(LIKES.USER_ID.eq(userId))
-                .orderBy(LIKES.LIKED_AT.asc())
+                .orderBy(LIKES.CREATED_AT.asc())
                 .fetch()
                 .map(mapping(Like::new));
     }
 
     public List<Like> getLikesByLineup(Long lineupId) {
-        // confirm that lineup exist(?)
         boolean exists = dsl.fetchExists(
                 selectFrom(LINEUP)
                         .where(LINEUP.ID.eq(lineupId))
@@ -144,5 +142,5 @@ public class LikeRepository {
     }
 
     // TODO: get the total amount of likes a user's lineups have accumulated
-    
+
 }

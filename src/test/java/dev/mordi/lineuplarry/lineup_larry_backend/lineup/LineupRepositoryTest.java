@@ -60,7 +60,7 @@ public class LineupRepositoryTest {
     // Create
     @Test
     void successfulCreationOfLineup() {
-        Lineup newLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "newly created lineup", "newly created lineup body", 2L);
+        Lineup newLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "newly created lineup", "newly created lineup body", 2L, null, null);
 
         Lineup res = lineupRepository.createLineup(newLineup);
 
@@ -72,7 +72,7 @@ public class LineupRepositoryTest {
 
     @Test
     void failCreateDueToUsingNonexistentUserId() {
-        Lineup lineupWithNonexistentUserId = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "valid body", 999L);
+        Lineup lineupWithNonexistentUserId = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "valid body", 999L, null, null);
 
         assertThrows(InvalidLineupException.UserIdInvalidException.class, () -> {
             lineupRepository.createLineup(lineupWithNonexistentUserId);
@@ -96,7 +96,7 @@ public class LineupRepositoryTest {
         assertThat(lineupToFetch.get().id()).isEqualTo(1L);
         assertThat(lineupToFetch.get().userId()).isEqualTo(1L);
 
-        Lineup newLineupData = new Lineup(lineupToFetch.get().id(), Agent.KILLJOY, Map.SUNSET, "updated title", "updated body", lineupToFetch.get().userId());
+        Lineup newLineupData = new Lineup(lineupToFetch.get().id(), Agent.KILLJOY, Map.SUNSET, "updated title", "updated body", lineupToFetch.get().userId(), null, null);
         lineupRepository.updateLineup(newLineupData);
 
         Optional<LineupWithAuthorDTO> updatedLineup = lineupRepository.getLineupById(1L);
@@ -107,7 +107,7 @@ public class LineupRepositoryTest {
 
         assertThat(updatedLineup.get())
                 .usingRecursiveComparison()
-                .ignoringFields("authorUsername")
+                .ignoringFields("authorUsername", "createdAt", "updatedAt")
                 .isEqualTo(newLineupData);
     }
 
@@ -179,13 +179,16 @@ public class LineupRepositoryTest {
         Optional<List<LineupWithAuthorDTO>> lineups = lineupRepository.getLineupsByUserId(2L, 20L, 2L);
 
         List<LineupWithAuthorDTO> expectedLineups = List.of(
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo"),
-                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, "userTwo")
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo"),
+                new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, null, null, "userTwo")
         );
 
         assertThat(lineups).isPresent();
         assertThat(lineups.get()).isNotNull();
-        assertThat(lineups.get()).isEqualTo(expectedLineups);
+        assertThat(lineups.get())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineups);
     }
 
     // test on nonexistent user, which should return an error
@@ -206,17 +209,19 @@ public class LineupRepositoryTest {
         assertThat(lineups.get()).isEqualTo(Collections.EMPTY_LIST);
     }
 
-    // TODO: tests for "findByMapAndTitle"
     @Test
     void successfulFindByMapAndTitle() {
         List<LineupWithAuthorDTO> query = lineupRepository.getLineups("same name", null, Map.ICEBOX, 20L, null);
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
-        assertThat(query).isEqualTo(expectedResult);
+        assertThat(query)
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // pagination, success
@@ -226,10 +231,13 @@ public class LineupRepositoryTest {
         List<LineupWithAuthorDTO> query = lineupRepository.getLineups("same name", null, Map.ICEBOX, 20L, 5L);
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
-        assertThat(query).isEqualTo(expectedResult);
+        assertThat(query)
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // no matches, just agent, vs just map vs both
@@ -248,13 +256,16 @@ public class LineupRepositoryTest {
         List<LineupWithAuthorDTO> lineups = lineupRepository.getLineups("same name", null, null, 20L, null);
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree"),
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"),
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(lineups).isNotEmpty();
         assertThat(lineups.size()).isEqualTo(2);
-        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
+        assertThat(lineups.stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     @Test
@@ -262,12 +273,15 @@ public class LineupRepositoryTest {
         List<LineupWithAuthorDTO> lineups = lineupRepository.getLineups("same name", null, null, 1L, null);
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(lineups).isNotEmpty();
         assertThat(lineups.size()).isEqualTo(1);
-        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
+        assertThat(lineups.stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     @Test
@@ -275,12 +289,15 @@ public class LineupRepositoryTest {
         List<LineupWithAuthorDTO> lineups = lineupRepository.getLineups("same name", null, null, 1L, 5L);
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
-                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, "userThree")
+                new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree")
         );
 
         assertThat(lineups).isNotEmpty();
         assertThat(lineups.size()).isEqualTo(1);
-        assertThat(lineups.stream().toList()).isEqualTo(expectedResult);
+        assertThat(lineups.stream().toList())
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedResult);
     }
 
     // return for zero finds
@@ -299,11 +316,14 @@ public class LineupRepositoryTest {
                 Map.BIND, 20L, null);
 
         List<LineupWithAuthorDTO> expectedLineup = Collections.singletonList(
-                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, "userTwo")
+                new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo")
         );
 
         assertThat(lineups).isNotEmpty();
-        assertThat(lineups).isEqualTo(expectedLineup);
+        assertThat(lineups)
+                .usingRecursiveComparison()
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualTo(expectedLineup);
     }
 
     @Test
@@ -336,7 +356,6 @@ public class LineupRepositoryTest {
         });
     }
 
-    // TODO: test the doesLineupExist
     @Test
     void successfulDoesLineupExist() {
         Long validLineupId = 2L;

@@ -40,11 +40,12 @@ public class LikeRepositoryTest {
         List<Like> res = likeRepository.getAllLikes();
 
         assertThat(res).isNotEmpty();
-        assertThat(res.toArray().length).isEqualTo(18);
+        assertThat(res.toArray().length).isEqualTo(21);
         assertThat(res.toArray()[0])
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt")
                 .isEqualTo(new Like(1L, 2L, OffsetDateTime.now()));
+
         assertThat(res.toArray()[17])
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt")
@@ -124,7 +125,8 @@ public class LikeRepositoryTest {
                 new Like(2L, 22L, null),
                 new Like(2L, 23L, null),
                 new Like(2L, 12L, null),
-                new Like(2L, 14L, null)
+                new Like(2L, 14L, null),
+                new Like(2L, 20L, null)
         );
 
         assertThat(userTwosLikes)

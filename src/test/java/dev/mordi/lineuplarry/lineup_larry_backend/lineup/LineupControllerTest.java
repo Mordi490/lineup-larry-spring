@@ -51,9 +51,9 @@ public class LineupControllerTest {
     void setUp() {
         this.userWithLineups = new User(1L, "John");
         this.userWithNoLineups = new User(2L, "Jane");
-        this.lineupOne = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, "John");
-        this.lineupTwo = new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineup title two", "lineup body two", 1L, "John");
-        this.lineupWithSameTitleAsLineupOne = new LineupWithAuthorDTO(4L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, "John");
+        this.lineupOne = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, null, null, "John");
+        this.lineupTwo = new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineup title two", "lineup body two", 1L, null, null, "John");
+        this.lineupWithSameTitleAsLineupOne = new LineupWithAuthorDTO(4L, Agent.SOVA, Map.ASCENT, "lineup title", "lineup body", 1L, null, null, "John");
     }
 
     @Test
@@ -154,8 +154,8 @@ public class LineupControllerTest {
     // create
     @Test
     void successfulCreateLineup() throws Exception {
-        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
-        Lineup expectedLineupCreatedResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id(), null, null);
+        Lineup expectedLineupCreatedResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id(), null, null);
         when(lineupService.createLineup(lineupToCreate)).thenReturn(expectedLineupCreatedResult);
 
         try {
@@ -174,8 +174,8 @@ public class LineupControllerTest {
 
     @Test
     void successfulCreateLineupWithNullId() throws Exception {
-        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
-        Lineup expectedLineupResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id());
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id(), null, null);
+        Lineup expectedLineupResult = new Lineup(3L, Agent.SOVA, Map.ASCENT, "created title", "created body", userWithLineups.id(), null, null);
         when(lineupService.createLineup(lineupToCreate)).thenReturn(expectedLineupResult);
 
         try {
@@ -197,7 +197,7 @@ public class LineupControllerTest {
     // update
     @Test
     void successfulUpdate() throws Exception {
-        Lineup newLineupData = new Lineup(lineupOne.id(), Agent.SOVA, Map.ASCENT, "updated title", "updated body", lineupOne.userId());
+        Lineup newLineupData = new Lineup(lineupOne.id(), Agent.SOVA, Map.ASCENT, "updated title", "updated body", lineupOne.userId(), null, null);
         doNothing().when(lineupService).updateLineup(newLineupData.id(), newLineupData);
 
         try {
@@ -230,7 +230,7 @@ public class LineupControllerTest {
     @Test
     void failUpdateOnBlankTitle() throws Exception {
         Lineup lineupWithBlankTitle = new Lineup(
-                lineupOne.id(), lineupOne.agent(), lineupOne.map(), "  ", lineupOne.body(), lineupOne.userId());
+                lineupOne.id(), lineupOne.agent(), lineupOne.map(), "  ", lineupOne.body(), lineupOne.userId(), null, null);
 
         try {
             String lineupWithBlankTitleJson = om.writeValueAsString(lineupWithBlankTitle);
@@ -251,7 +251,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnEmptyTitle() throws Exception {
-        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "", lineupOne.body(), lineupOne.userId());
+        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "", lineupOne.body(), lineupOne.userId(), null, null);
 
         try {
             String lineupWithEmptyTitleJson = om.writeValueAsString(lineupWithEmptyTitle);
@@ -272,7 +272,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnBlankBody() throws Exception {
-        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "   ", lineupOne.userId());
+        Lineup lineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "   ", lineupOne.userId(), null, null);
 
         try {
             String lineupWithEmptyTitleJson = om.writeValueAsString(lineupWithEmptyTitle);
@@ -293,7 +293,7 @@ public class LineupControllerTest {
 
     @Test
     void failUpdateOnEmptyBody() throws Exception {
-        Lineup lineupWithEmptyBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "", lineupOne.userId());
+        Lineup lineupWithEmptyBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "", lineupOne.userId(), null, null);
 
         try {
             String lineupWithEmptyBodyJson = om.writeValueAsString(lineupWithEmptyBody);

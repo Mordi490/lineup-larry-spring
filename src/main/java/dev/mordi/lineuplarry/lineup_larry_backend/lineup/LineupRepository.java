@@ -57,7 +57,7 @@ public class LineupRepository {
     }
 
     public Optional<LineupWithAuthorDTO> getLineupById(Long id) {
-        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
+        return dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, LINEUP.CREATED_AT, LINEUP.UPDATED_AT, USERS.USERNAME)
                 .from(LINEUP)
                 .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                 .where(LINEUP.ID.eq(id))
@@ -73,6 +73,8 @@ public class LineupRepository {
                     r.setBody(lineup.body());
                     r.setAgent(lineup.agent());
                     r.setMap(lineup.map());
+                    r.setCreatedAt(lineup.createdAt());
+                    r.setUpdatedAt(lineup.updatedAt());
                     r.store();
                 });
     }
@@ -99,7 +101,7 @@ public class LineupRepository {
         }
 
         if (lastValue != null) {
-            List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
+            List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, LINEUP.CREATED_AT, LINEUP.UPDATED_AT, USERS.USERNAME)
                     .from(LINEUP)
                     .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                     .where(LINEUP.USER_ID.eq(userId))
@@ -112,7 +114,7 @@ public class LineupRepository {
             return Optional.of(lineups);
         }
 
-        List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
+        List<LineupWithAuthorDTO> lineups = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, LINEUP.CREATED_AT, LINEUP.UPDATED_AT, USERS.USERNAME)
                 .from(LINEUP)
                 .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID))
                 .where(LINEUP.USER_ID.eq(userId))
@@ -138,7 +140,7 @@ public class LineupRepository {
 
     // TODO: Set a limit on pageSize
     public List<LineupWithAuthorDTO> getLineups(String title, Agent agent, Map map, Long pageSize, Long lastValue) {
-        var baseQuery = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, USERS.USERNAME)
+        var baseQuery = dsl.select(LINEUP.ID, LINEUP.AGENT, LINEUP.MAP, LINEUP.TITLE, LINEUP.BODY, LINEUP.USER_ID, LINEUP.CREATED_AT, LINEUP.UPDATED_AT, USERS.USERNAME)
                 .from(LINEUP)
                 .join(USERS).on(LINEUP.USER_ID.eq(USERS.ID));
 

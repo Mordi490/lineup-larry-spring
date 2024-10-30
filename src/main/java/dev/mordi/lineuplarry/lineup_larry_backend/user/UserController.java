@@ -52,4 +52,11 @@ public class UserController {
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
+
+    @GetMapping("/summary/{id}")
+    public ResponseEntity<UserSummaryDTO> getUserSummary(@PathVariable Long id) {
+        UserSummaryDTO ar = userService.getUserSummary(id);
+        return new ResponseEntity<>(ar, HttpStatus.OK);
+    }
+    // TODO: after auth:
 }
