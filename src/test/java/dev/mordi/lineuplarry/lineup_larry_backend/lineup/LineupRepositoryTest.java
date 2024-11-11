@@ -68,6 +68,8 @@ public class LineupRepositoryTest {
         assertThat(res.title()).isEqualTo(newLineup.title());
         assertThat(res.body()).isEqualTo(newLineup.body());
         assertThat(res.userId()).isEqualTo(newLineup.userId());
+        assertThat(res.createdAt()).isNotNull();
+        assertThat(res.updatedAt()).isNotNull();
     }
 
     @Test

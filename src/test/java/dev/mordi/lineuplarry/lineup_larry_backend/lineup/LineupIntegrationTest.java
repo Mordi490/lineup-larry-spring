@@ -248,8 +248,9 @@ public class LineupIntegrationTest {
         assertThat(res.getBody().id()).isNotNull();
         // sequence has been set to start of at 101, to give headroom for seed data, only applies to "dev"-env
         assertThat(res.getBody().id()).isEqualTo(101);
+        assertThat(res.getBody().createdAt()).isNotNull();
+        assertThat(res.getBody().updatedAt()).isNotNull();
     }
-
 
     @Test
     void successfulCreateLineupWithoutId() {
@@ -259,6 +260,22 @@ public class LineupIntegrationTest {
         ResponseEntity<Lineup> res = restTemplate.postForEntity(
                 "/api/lineups",
                 new HttpEntity<>(lineupWithoutIdJsonTemplate, headers),
+                Lineup.class
+        );
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(res.getBody()).isNotNull();
+        assertThat(res.getBody().id()).isEqualTo(101);
+    }
+
+    @Test
+    void createLineupWithUserIdAsString() {
+        String lineupWithUserIdAsStringJsonTemplate = """
+                {"title":"lineup to create","body":"body to create","agent":"SOVA","map":"ICEBOX","userId":"2"}""";
+
+        ResponseEntity<Lineup> res = restTemplate.postForEntity(
+                "/api/lineups",
+                new HttpEntity<>(lineupWithUserIdAsStringJsonTemplate, headers),
                 Lineup.class
         );
 
@@ -432,11 +449,12 @@ public class LineupIntegrationTest {
     void successfulUpdate() {
         Lineup updatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "updated body", 1L, null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange(
+        ResponseEntity<Optional<LineupWithAuthorDTO>> res = restTemplate.exchange(
                 "/api/lineups/1",
                 HttpMethod.PUT,
                 new HttpEntity<>(updatedLineup, headers),
-                String.class
+                new ParameterizedTypeReference<>() {
+                }
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
