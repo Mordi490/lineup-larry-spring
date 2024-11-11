@@ -405,6 +405,7 @@ public class UserIntegrationTest {
         );
 
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody().username()).isEqualTo("userFive");
         assertThat(res.getBody().userId()).isEqualTo(5);
         assertThat(res.getBody().recentLineups()).isEmpty();
