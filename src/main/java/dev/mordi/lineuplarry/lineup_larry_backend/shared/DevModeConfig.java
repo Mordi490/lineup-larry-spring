@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.time.OffsetDateTime;
+
 @Configuration
 @Profile("dev")
 public class DevModeConfig {
@@ -46,34 +48,37 @@ public class DevModeConfig {
             userRepository.createUser(new User(null, "userFour"));
             userRepository.createUser(new User(null, "userFive"));
 
+            // time
+            OffsetDateTime timestamp = OffsetDateTime.now();
+            
             // seeded lineup data: designating REYNA and PEARL to be the agent and map with no data associated with them
-            lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 2L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 2L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.CYPHER, Map.SUNSET, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null));
+            lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L, timestamp, timestamp.plusDays(1L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 2L, timestamp, timestamp.plusDays(2L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 2L, timestamp, timestamp.plusDays(3L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.CYPHER, Map.SUNSET, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusDays(4L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusDays(5L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.KILLJOY, Map.ICEBOX, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusDays(6L)));
 
-            lineupRepository.createLineup(new Lineup(null, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.PHOENIX, Map.LOTUS, "cheeky flash", " then click heads", 1L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.HARBOR, Map.FRACTURE, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.GEKKO, Map.BIND, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.DEADLOCK, Map.FRACTURE, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.ISO, Map.BIND, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.CLOVE, Map.BIND, "titleFour", "bodyFour", 3L, null, null));
-            lineupRepository.createLineup(new Lineup(null, Agent.JETT, Map.FRACTURE, "titleFour", "bodyFour", 3L, null, null));
+            lineupRepository.createLineup(new Lineup(null, Agent.CHAMBER, Map.SPLIT, "awp crutch", "filler text here", 3L, timestamp, timestamp.plusWeeks(1L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.BREACH, Map.FRACTURE, "some flash", "even more filler text here", 1L, timestamp, timestamp.plusWeeks(2L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.YORU, Map.HAVEN, "teleport thingy", "good for post plant", 2L, timestamp, timestamp.plusWeeks(3L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.PHOENIX, Map.LOTUS, "cheeky flash", " then click heads", 1L, timestamp, timestamp.plusWeeks(4L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.SKYE, Map.SPLIT, "sick pop flash", "then dog", 3L, timestamp, timestamp.plusWeeks(5L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.VYSE, Map.BREEZE, "click heads", "just click the head", 3L, timestamp, timestamp.plusMonths(1L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(2L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.VIPER, Map.SPLIT, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(3L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.SAGE, Map.ICEBOX, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(4L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.RAZE, Map.BREEZE, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(5L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.ASTRA, Map.ICEBOX, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(6L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(7L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.NEON, Map.FRACTURE, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(8L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(9L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.HARBOR, Map.FRACTURE, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(10L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.GEKKO, Map.BIND, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusMonths(11L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.DEADLOCK, Map.FRACTURE, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusYears(1L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.ISO, Map.BIND, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusYears(2L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.CLOVE, Map.BIND, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusYears(3L)));
+            lineupRepository.createLineup(new Lineup(null, Agent.JETT, Map.FRACTURE, "titleFour", "bodyFour", 3L, timestamp, timestamp.plusYears(4L)));
 
             likeRepository.likeLineup(new Like(1L, 2L, null));
             likeRepository.likeLineup(new Like(1L, 3L, null));
