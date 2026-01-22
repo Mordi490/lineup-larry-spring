@@ -1,35 +1,37 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>3.5.3</version>
+        <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>dev.mordi.lineuplarry</groupId>
     <artifactId>lineup-larry-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>lineup-larry-backend</name>
     <description>Demo project for Spring Boot</description>
-    <url/>
+    <url />
     <licenses>
-        <license/>
+        <license />
     </licenses>
     <developers>
-        <developer/>
+        <developer />
     </developers>
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection />
+        <developerConnection />
+        <tag />
+        <url />
     </scm>
     <properties>
         <java.version>21</java.version>
-        <testcontainers.version>1.20.1</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
         <testcontainers-jooq-codegen-maven-plugin.version>0.0.4
         </testcontainers-jooq-codegen-maven-plugin.version>
     </properties>
@@ -145,17 +147,23 @@
                                         </excludes>
                                         <ForcedTypes>
                                             <forcedType>
-                                                <userType>dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent
+                                                <userType
+                                                >dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent
                                                 </userType>
-                                                <enumConverter>true</enumConverter>
-                                                <includeExpression>public\.lineup\.agent</includeExpression>
+                                                <enumConverter
+                                                >true</enumConverter>
+                                                <includeExpression
+                                                >public\.lineup\.agent</includeExpression>
                                                 <includeTypes>.*</includeTypes>
                                             </forcedType>
                                             <forcedType>
-                                                <userType>dev.mordi.lineuplarry.lineup_larry_backend.enums.Map
+                                                <userType
+                                                >dev.mordi.lineuplarry.lineup_larry_backend.enums.Map
                                                 </userType>
-                                                <enumConverter>true</enumConverter>
-                                                <includeExpression>public\.lineup\.map</includeExpression>
+                                                <enumConverter
+                                                >true</enumConverter>
+                                                <includeExpression
+                                                >public\.lineup\.map</includeExpression>
                                                 <includeTypes>.*</includeTypes>
                                             </forcedType>
                                         </ForcedTypes>
