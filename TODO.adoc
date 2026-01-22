@@ -1,0 +1,4 @@
+Things that I should get done:
+* [] Provide easy setup/dev env guide
+* [] Update deps
+* [] Add OpenAPI/Swagger
