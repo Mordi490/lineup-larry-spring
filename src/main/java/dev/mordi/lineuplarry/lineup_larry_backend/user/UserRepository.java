@@ -81,10 +81,8 @@ public class UserRepository {
         dsl.select(USERS.ID, USERS.USERNAME)
             .from(USERS)
             .where(USERS.ID.eq(userId))
-            .fetchOneInto(
-                User
-                    .class); // confirm that fetchOneInto works or revert back to
-                             // fetch(mapping((etc...
+            .fetchOneInto(User.class); // confirm that fetchOneInto works or revert back to
+    // fetch(mapping((etc...
 
     // perform CTEs for each of the lists we want to fetch
     List<LineupIdTitleDTO> recentlyCreatedLineups =
