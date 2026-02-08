@@ -1,3 +1,39 @@
 [tools]
 java = "graalvm-community-21.0.2"
 maven = "3.9.12"
+
+[tasks.dev]
+description = "Run Spring Boot app in dev mode"
+run = "./mvnw spring-boot:run"
+
+[tasks.test]
+description = "Run test suite"
+run = "./mvnw test"
+
+[tasks.clean-test]
+description = "Clean and run tests"
+run = "./mvnw clean test"
+
+[tasks.clean]
+description = "Clean build outputs"
+run = "./mvnw clean"
+
+[tasks.build]
+description = "Full build verification"
+run = "./mvnw clean verify"
+
+[tasks.package]
+description = "Build package artifact"
+run = "./mvnw package"
+
+[tasks.install]
+description = "Clean build and install to local Maven repo"
+run = "./mvnw clean install"
+
+[tasks.ci]
+description = "CI-style build: clean, generate sources, verify"
+run = "./mvnw -B clean generate-sources verify"
+
+[tasks.generate-sources]
+description = "Generate jOOQ sources"
+run = "./mvnw generate-sources"
