@@ -29,6 +29,8 @@ Maven equivalent:
 
 ## Run
 
+### Local DB (`dev`)
+
 Set datasource env vars (example):
 
 ```bash
@@ -43,12 +45,21 @@ Start app:
 mise run dev
 ```
 
+### Testcontainers DB (`dev-tc`)
+
+No datasource env vars are needed. Docker is required.
+
+```bash
+mise run dev-tc
+```
+
 App runs on `http://localhost:9090`.
 
 ## Tasks
 
 ```bash
 mise run dev
+mise run dev-tc
 mise run test
 mise run clean-test
 mise run clean
