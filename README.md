@@ -13,25 +13,34 @@ REST API built with Java + Spring Boot + jOOQ.
 - Maven (`./mvnw`)
 - `mise` tasks
 
-## Important
+## Prerequisites
 
-Generate jOOQ sources before running dev, tests, or builds:
+- `git`
+- [`mise`](https://mise.jdx.dev/) installed
+- Docker installed and running
+- PostgreSQL (only if using local DB mode via `mise run dev`)
+
+## Quick Start
 
 ```bash
-mise run generate-sources
+git clone https://codeberg.org/Mordi/lineup-larry-spring.git
+cd lineup-larry-spring
+mise install
 ```
 
-Maven equivalent:
+Then choose one run mode:
+
+### Containerized DB (`dev-tc`) (recommended)
+
+No datasource env vars are needed. Docker is required.
 
 ```bash
-./mvnw generate-sources
+mise run dev-tc
 ```
-
-## Run
 
 ### Local DB (`dev`)
 
-Set datasource env vars (example):
+Create a local Postgres database named `lineup_larry`, then set datasource env vars:
 
 ```bash
 export SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5432/lineup_larry'
@@ -45,15 +54,21 @@ Start app:
 mise run dev
 ```
 
-### Testcontainers DB (`dev-tc`)
+App runs on `http://localhost:9090`.
 
-No datasource env vars are needed. Docker is required.
+## Important
+
+Most Maven tasks already trigger `generate-sources` through the Maven lifecycle. Run this only when you want to regenerate jOOQ classes directly:
 
 ```bash
-mise run dev-tc
+mise run generate-sources
 ```
 
-App runs on `http://localhost:9090`.
+Maven equivalent:
+
+```bash
+./mvnw generate-sources
+```
 
 ## Tasks
 
