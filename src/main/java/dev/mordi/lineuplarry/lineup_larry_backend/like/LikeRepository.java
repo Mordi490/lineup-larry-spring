@@ -62,7 +62,7 @@ public class LikeRepository {
         .set(LIKES.LINEUP_ID, like.lineupId())
         .set(LIKES.USER_ID, like.userId())
         .returning()
-        .fetchOne(mapping(Like::new));
+        .fetchOne(r -> new Like(r.getUserId(), r.getLineupId(), r.getCreatedAt()));
   }
 
   public void removeLike(Like like) {
@@ -93,8 +93,7 @@ public class LikeRepository {
     return dsl.selectFrom(LIKES)
         .where(LIKES.USER_ID.eq(userId))
         .orderBy(LIKES.CREATED_AT.asc())
-        .fetch()
-        .map(mapping(Like::new));
+        .fetch(r -> new Like(r.getUserId(), r.getLineupId(), r.getCreatedAt()));
   }
 
   public List<Like> getLikesByLineup(Long lineupId) {
@@ -106,8 +105,7 @@ public class LikeRepository {
 
     return dsl.selectFrom(LIKES)
         .where(LIKES.LINEUP_ID.eq(lineupId))
-        .fetch()
-        .map(mapping(Like::new));
+        .fetch(r -> new Like(r.getUserId(), r.getLineupId(), r.getCreatedAt()));
   }
 
   public long getLikeCountByLineup(Long lineupId) {

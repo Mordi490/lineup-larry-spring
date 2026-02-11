@@ -146,10 +146,6 @@
                             </flyway>
                             <jooq>
                                 <generator>
-                                    <generate>
-                                        <recordsImplementingRecordN
-                                        >true</recordsImplementingRecordN>
-                                    </generate>
                                     <database>
                                         <includes>.*</includes>
                                         <inputSchema>public</inputSchema>

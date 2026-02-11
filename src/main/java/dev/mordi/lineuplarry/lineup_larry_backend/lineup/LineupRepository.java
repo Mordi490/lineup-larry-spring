@@ -34,7 +34,17 @@ public class LineupRepository {
           .set(LINEUP.BODY, lineup.body())
           .set(LINEUP.USER_ID, lineup.userId())
           .returning()
-          .fetchOne(mapping(Lineup::new));
+          .fetchOne(
+              r ->
+                  new Lineup(
+                      r.getId(),
+                      r.getAgent(),
+                      r.getMap(),
+                      r.getTitle(),
+                      r.getBody(),
+                      r.getUserId(),
+                      r.getCreatedAt(),
+                      r.getUpdatedAt()));
     } else {
       throw new RuntimeException("Failed to create lineup");
     }

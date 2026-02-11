@@ -49,7 +49,7 @@ public class UserRepository {
     return dsl.insertInto(USERS)
         .set(USERS.USERNAME, user.username())
         .returning()
-        .fetchOne(mapping(User::new));
+        .fetchOne(r -> new User(r.getId(), r.getUsername()));
   }
 
   public void updateUser(Long id, User user) {
