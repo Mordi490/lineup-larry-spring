@@ -1,285 +1,180 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.shared;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import dev.mordi.lineuplarry.lineup_larry_backend.like.exceptions.InvalidLikeException;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterErrors;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-// one way of forcing Spring to return ProblemDetail errors
-// extends ResponseEntityExceptionHandler
-// another one is to set "spring.mvc.problemdetails.enabled=true" in app.propertie/yaml
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
-public class GlobalExceptionController {
+public class GlobalExceptionController extends ResponseEntityExceptionHandler {
 
-  private final String BAD_REQUEST = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400";
-  private final String NOT_FOUND = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404";
-
-  // Consider redoing this at when opting for Spring's ProblemDetail thingies
-  // Generic you gave me bad data pd
-  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-  public ProblemDetail handleMethodArgumentTypeMismatchException(
-      MethodArgumentTypeMismatchException e) {
-    ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-    problemDetail.setTitle("Invalid data");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    String error =
-        String.format(
-            "Invalid value '%s' for parameter '%s'. Expected type: '%s'",
-            e.getValue(), e.getName(), e.getRequiredType().getSimpleName());
-    problemDetail.setDetail(error);
-    return problemDetail;
-  }
-
-  // User Exceptions
-  @ExceptionHandler(InvalidUserException.IdDoesNotMatchUserException.class)
-  public ProblemDetail handleIdDoesNotMatchUser(
-      InvalidUserException.IdDoesNotMatchUserException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("UserId is not valid");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidUserException.BlankUsernameException.class)
-  public ProblemDetail handleBlankUsername(InvalidUserException.BlankUsernameException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Username is blank");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidUserException.EmptyUsernameException.class)
-  public ProblemDetail handleEmptyUsername(InvalidUserException.EmptyUsernameException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Username is empty");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidUserException.NullUsernameException.class)
-  public ProblemDetail handleNullUsername(InvalidUserException.NullUsernameException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Username is null");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidLineupException.ChangedLineupIdException.class)
-  public ProblemDetail handleChangedLineupIdException(
-      InvalidLineupException.ChangedLineupIdException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Lineup id's cannot be altered");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidUserException.UserNotFoundException.class)
-  public ProblemDetail handleUserNotFoundException(InvalidUserException.UserNotFoundException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-    problemDetail.setTitle("User not found");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(NOT_FOUND));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidLineupException.NoSuchLineupException.class)
-  public ProblemDetail handleNoSuchLineupException(InvalidLineupException.NoSuchLineupException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-    problemDetail.setTitle("Lineup not found");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(NOT_FOUND));
-    return problemDetail;
-  }
-
-  // NB! this is different from the one above!
-  // Invoked when fetching all lineups from a nonexistent user
-  @ExceptionHandler(InvalidLineupException.NoUserException.class)
-  public ProblemDetail handleNoUserExceptionException(InvalidLineupException.NoUserException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-    problemDetail.setTitle("User not found");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(NOT_FOUND));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidUserException.IncludedUserIdException.class)
-  public ProblemDetail handleIncludedUserIdException(
-      InvalidUserException.IncludedUserIdException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("The userId provided is not valid");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidLineupException.EmptySearchTitleException.class)
-  public ProblemDetail handleEmptySearchTitleException(
-      InvalidLineupException.EmptySearchTitleException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Search title cannot be empty");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidLineupException.BlankSearchTitleException.class)
-  public ProblemDetail handleBlankSearchTitleException(
-      InvalidLineupException.BlankSearchTitleException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Search title cannot be blank");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  // feels bad to overwrite
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ProblemDetail handleValidationException(MethodArgumentNotValidException e) {
-    // Collect validation errors
-    StringBuilder detailBuilder = new StringBuilder();
-    e.getBindingResult()
-        .getAllErrors()
-        .forEach(
-            (error) -> {
-              String fieldName = ((FieldError) error).getField();
-              String errorMessage = error.getDefaultMessage();
-              if (!detailBuilder.isEmpty()) {
-                detailBuilder.append("; ");
-              }
-              // putting this aside as it looks ugly, but keeping it since it might make
-              // it easier to read when multiples are wrong
-              detailBuilder.append(fieldName).append(": ").append(errorMessage);
-            });
-
-    // Create ProblemDetails object
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detailBuilder.toString());
-    problemDetail.setTitle("Invalid data");
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    problemDetail.setProperty("time", Instant.now());
-
-    return problemDetail;
-  }
-
-  // handle cases where we get enums that don't make sense
-  @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ProblemDetail handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-    ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-    // assuming happy path for now...
-    if (e.getCause() instanceof InvalidFormatException) {
-      // determine if it's agent or map
-      String invalidValue = extractInvalidValue(e.getMessage());
-      if (e.getMessage().contains("SOVA")) {
-        InvalidLineupException.InvalidAgentException ex =
-            new InvalidLineupException.InvalidAgentException(invalidValue);
-        return handleInvalidAgentException(ex);
-      }
-      if (e.getMessage().contains("ASCENT")) {
-        InvalidLineupException.InvalidMapException ex =
-            new InvalidLineupException.InvalidMapException(invalidValue);
-        return handleInvalidMapException(ex);
-      }
-      problemDetail.setDetail("Invalid enum spotted!");
-    }
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  // hacky solution but, should look for alternate solutions
-  private static String extractInvalidValue(String message) {
-    String prefix = "from String \"";
-    String suffix = "\": not one of the values accepted";
-
-    int startIndex = message.indexOf(prefix);
-    if (startIndex != -1) {
-      startIndex += prefix.length();
-      int endIndex = message.indexOf(suffix, startIndex);
-      if (endIndex != -1) {
-        return message.substring(startIndex, endIndex);
-      }
-    }
-
-    return null; // Return null or throw an exception if not found
-  }
-
-  @ExceptionHandler(InvalidLineupException.InvalidAgentException.class)
-  public ProblemDetail handleInvalidAgentException(InvalidLineupException.InvalidAgentException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Invalid agent");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
-  }
-
-  @ExceptionHandler(InvalidLineupException.InvalidMapException.class)
-  public ProblemDetail handleInvalidMapException(InvalidLineupException.InvalidMapException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Invalid map");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
+  @ExceptionHandler(ApiProblemException.class)
+  public ProblemDetail handleApiProblemException(ApiProblemException e) {
+    ProblemDetail problemDetail = e.getBody();
+    withTimestamp(problemDetail);
     return problemDetail;
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
   public ProblemDetail handleConstraintViolationException(ConstraintViolationException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Invalid value");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    problemDetail.setTitle("Bad Request");
+    problemDetail.setType(
+        URI.create("https://lineup-larry.dev/problems/validation/constraint-violation"));
+    problemDetail.setProperty("code", "REQUEST_CONSTRAINT_VIOLATION");
+    withTimestamp(problemDetail);
     return problemDetail;
   }
 
-  @ExceptionHandler(InvalidLineupException.BlankTitleException.class)
-  public ProblemDetail handleBlankSearchTitleException(
-      InvalidLineupException.BlankTitleException e) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-    problemDetail.setTitle("Invalid search title");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(BAD_REQUEST));
-    return problemDetail;
+  @Override
+  protected ResponseEntity<Object> handleTypeMismatch(
+      TypeMismatchException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    String parameterName =
+        e instanceof MethodArgumentTypeMismatchException mismatch ? mismatch.getName() : "parameter";
+    String expectedType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown";
+    String detail =
+        String.format(
+            "Invalid value '%s' for parameter '%s'. Expected type: '%s'",
+            e.getValue(), parameterName, expectedType);
+
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+    problemDetail.setTitle("Invalid data");
+    problemDetail.setType(URI.create("https://lineup-larry.dev/problems/request/invalid-parameter"));
+    problemDetail.setProperty("code", "REQUEST_INVALID_PARAMETER");
+    withTimestamp(problemDetail);
+    return handleExceptionInternal(e, problemDetail, headers, HttpStatus.BAD_REQUEST, request);
   }
 
-  @ExceptionHandler(InvalidLikeException.LikeNotFound.class)
-  public ProblemDetail handleNoSuchLikeException(InvalidLikeException.LikeNotFound e) {
+  @Override
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(
+      MethodArgumentNotValidException e,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
     ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-    problemDetail.setTitle("Like not found");
-    problemDetail.setProperty("time", Instant.now());
-    problemDetail.setType(URI.create(NOT_FOUND));
-    return problemDetail;
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, buildMethodArgumentDetail(e));
+    problemDetail.setTitle("Invalid data");
+    problemDetail.setType(URI.create("https://lineup-larry.dev/problems/request/invalid-body"));
+    problemDetail.setProperty("code", "REQUEST_INVALID_BODY");
+    withTimestamp(problemDetail);
+    return handleExceptionInternal(e, problemDetail, headers, HttpStatus.BAD_REQUEST, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHandlerMethodValidationException(
+      HandlerMethodValidationException e,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, buildHandlerValidationDetail(e));
+    problemDetail.setTitle("Invalid data");
+    problemDetail.setType(URI.create("https://lineup-larry.dev/problems/request/invalid-body"));
+    problemDetail.setProperty("code", "REQUEST_INVALID_BODY");
+    withTimestamp(problemDetail);
+    return handleExceptionInternal(e, problemDetail, headers, HttpStatus.BAD_REQUEST, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(
+      HttpMessageNotReadableException e,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    Throwable cause = e.getMostSpecificCause();
+    if (cause instanceof InvalidFormatException invalidFormatException) {
+      Class<?> targetType = invalidFormatException.getTargetType();
+      String invalidValue = String.valueOf(invalidFormatException.getValue());
+      if (targetType == Agent.class) {
+        return toProblemResponse(new InvalidLineupException.InvalidAgentException(invalidValue), headers);
+      }
+      if (targetType == Map.class) {
+        return toProblemResponse(new InvalidLineupException.InvalidMapException(invalidValue), headers);
+      }
+    }
+
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid request content.");
+    problemDetail.setTitle("Bad Request");
+    problemDetail.setType(URI.create("https://lineup-larry.dev/problems/request/unreadable-body"));
+    problemDetail.setProperty("code", "REQUEST_UNREADABLE_BODY");
+    withTimestamp(problemDetail);
+    return handleExceptionInternal(e, problemDetail, headers, HttpStatus.BAD_REQUEST, request);
+  }
+
+  private static String buildMethodArgumentDetail(MethodArgumentNotValidException e) {
+    List<String> messages = new ArrayList<>();
+    e.getBindingResult()
+        .getAllErrors()
+        .forEach(
+            (error) -> {
+              String errorMessage = error.getDefaultMessage();
+              if (error instanceof FieldError fieldError) {
+                messages.add(fieldError.getField() + ": " + errorMessage);
+                return;
+              }
+              messages.add(errorMessage);
+            });
+    return String.join("; ", messages);
+  }
+
+  private static String buildHandlerValidationDetail(HandlerMethodValidationException e) {
+    List<String> messages = new ArrayList<>();
+    e.getParameterValidationResults()
+        .forEach(
+            (result) -> {
+              if (result instanceof ParameterErrors parameterErrors) {
+                parameterErrors
+                    .getFieldErrors()
+                    .forEach((fieldError) -> messages.add(fieldError.getField() + ": " + fieldError.getDefaultMessage()));
+                return;
+              }
+              result
+                  .getResolvableErrors()
+                  .forEach(
+                      (resolvableError) -> {
+                        if (resolvableError.getDefaultMessage() != null) {
+                          messages.add(resolvableError.getDefaultMessage());
+                        }
+                      });
+            });
+    if (messages.isEmpty()) {
+      return "Invalid request content.";
+    }
+    return String.join("; ", messages);
+  }
+
+  private static ResponseEntity<Object> toProblemResponse(ApiProblemException e, HttpHeaders headers) {
+    ProblemDetail problemDetail = e.getBody();
+    withTimestamp(problemDetail);
+    return new ResponseEntity<>(problemDetail, headers, e.getStatusCode());
+  }
+
+  private static void withTimestamp(ProblemDetail problemDetail) {
+    if (problemDetail.getProperties() == null
+        || !problemDetail.getProperties().containsKey("timestamp")) {
+      problemDetail.setProperty("timestamp", Instant.now());
+    }
   }
 }
