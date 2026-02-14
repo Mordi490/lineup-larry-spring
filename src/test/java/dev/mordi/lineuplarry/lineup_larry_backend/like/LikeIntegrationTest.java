@@ -24,28 +24,34 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @AutoConfigureMockMvc
 public class LikeIntegrationTest {
 
-  @Autowired private TestRestTemplate restTemplate;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-  private static HttpHeaders headers;
+    private static HttpHeaders headers;
 
-  @Container @ServiceConnection
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine");
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
+        "postgres:18-alpine"
+    );
 
-  @BeforeAll
-  static void initHeaders() {
-    headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-  }
+    @BeforeAll
+    static void initHeaders() {
+        headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+    }
 
-  // test getAll endpoint
-  @Test
-  void successGetAllLikes() {
-    ResponseEntity<List<Like>> res =
-        restTemplate.exchange(
-            "/api/likes", HttpMethod.GET, null, new ParameterizedTypeReference<List<Like>>() {});
+    // test getAll endpoint
+    @Test
+    void successGetAllLikes() {
+        ResponseEntity<List<Like>> res = restTemplate.exchange(
+            "/api/likes",
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Like>>() {}
+        );
 
-    List<Like> expectedArray =
-        List.of(
+        List<Like> expectedArray = List.of(
             new Like(1L, 2L, null),
             new Like(1L, 3L, null),
             new Like(1L, 11L, null),
@@ -66,182 +72,210 @@ public class LikeIntegrationTest {
             new Like(3L, 1L, null),
             new Like(2L, 20L, null),
             new Like(4L, 9L, null),
-            new Like(4L, 22L, null));
+            new Like(4L, 22L, null)
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(res.getBody())
-        .usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdAt")
-        .isEqualTo(expectedArray);
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody())
+            .usingRecursiveFieldByFieldElementComparatorIgnoringFields(
+                "createdAt"
+            )
+            .isEqualTo(expectedArray);
+    }
 
-  // test liking a lineup
-  @Test
-  void successfullyLikeLineup() {
-    Like like = new Like(2L, 5L, null);
+    // test liking a lineup
+    @Test
+    void successfullyLikeLineup() {
+        Like like = new Like(2L, 5L, null);
 
-    ResponseEntity<Like> res =
-        restTemplate.postForEntity(
+        ResponseEntity<Like> res = restTemplate.postForEntity(
             "/api/likes",
             new HttpEntity<>(like, headers), // No need to send Like in the body, passing headers
-            Like.class);
+            Like.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    assertThat(res.getBody()).isNotNull();
-    assertThat(res.getBody().createdAt()).isNotNull();
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(res.getBody()).isNotNull();
+        assertThat(res.getBody().createdAt()).isNotNull();
+    }
 
-  // like an already liked lineup
-  // we expect a 200 ok and no changes to be applies
-  @Test
-  void likeAnAlreadyLikedLineup() {
-    // confirm that it already exists
-    ResponseEntity<Optional<Like>> res =
-        restTemplate.exchange(
+    // like an already liked lineup
+    // we expect a 200 ok and no changes to be applies
+    @Test
+    void likeAnAlreadyLikedLineup() {
+        // confirm that it already exists
+        ResponseEntity<Optional<Like>> res = restTemplate.exchange(
             "/api/likes/user/2/lineup/2",
             HttpMethod.GET,
             null,
-            new ParameterizedTypeReference<Optional<Like>>() {});
+            new ParameterizedTypeReference<Optional<Like>>() {}
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(res.getBody()).isPresent();
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody()).isPresent();
 
-    // redo the like
-    Like like = new Like(2L, 2L, null);
+        // redo the like
+        Like like = new Like(2L, 2L, null);
 
-    ResponseEntity<Like> res2 =
-        restTemplate.postForEntity(
+        ResponseEntity<Like> res2 = restTemplate.postForEntity(
             "/api/likes",
             new HttpEntity<>(like, headers), // No need to send Like in the body, passing headers
-            Like.class);
-    // confirm that it still persists, again.
-    assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    assertThat(res2.getBody()).isNotNull();
-    assertThat(res2.getBody().createdAt()).isNotNull();
-    assertThat(res2.getBody()).isEqualTo(res.getBody().get());
-  }
+            Like.class
+        );
+        // confirm that it still persists, again.
+        assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(res2.getBody()).isNotNull();
+        assertThat(res2.getBody().createdAt()).isNotNull();
+        assertThat(res2.getBody()).isEqualTo(res.getBody().get());
+    }
 
-  // test getting a like by id
-  @Test
-  void getNonexistentLikeById() {
-    ResponseEntity<String> res =
-        restTemplate.exchange("/api/likes/user/2/lineup/999", HttpMethod.GET, null, String.class);
+    // test getting a like by id
+    @Test
+    void getNonexistentLikeById() {
+        ResponseEntity<String> res = restTemplate.exchange(
+            "/api/likes/user/2/lineup/999",
+            HttpMethod.GET,
+            null,
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(res.getBody()).isNull();
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("Like not found");
+        assertThat(res.getBody()).contains("LIKE_NOT_FOUND");
+    }
 
-  // test removing a like
-  @Test
-  void removeLike() {
-    Like likeToDelete = new Like(2L, 2L, null);
+    // test removing a like
+    @Test
+    void removeLike() {
+        Like likeToDelete = new Like(2L, 2L, null);
 
-    ResponseEntity<String> res =
-        restTemplate.exchange(
+        ResponseEntity<String> res = restTemplate.exchange(
             "/api/likes/2",
             HttpMethod.DELETE,
             new HttpEntity<>(likeToDelete, headers),
-            String.class);
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-    assertThat(res.getBody()).isNull();
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(res.getBody()).isNull();
+    }
 
-  @Test
-  void removeNonexistentLike() {
-    Like nonexistendLike = new Like(2L, 999L, null);
-    ResponseEntity<String> res =
-        restTemplate.exchange(
+    @Test
+    void removeNonexistentLike() {
+        Like nonexistendLike = new Like(2L, 999L, null);
+        ResponseEntity<String> res = restTemplate.exchange(
             "/api/likes/999",
             HttpMethod.DELETE,
             new HttpEntity<>(nonexistendLike, headers),
-            String.class);
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(res.getBody()).contains("Like not found");
-    assertThat(res.getBody())
-        .contains("The like between userId: '2' and lineupId '999' does not exist");
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("Like not found");
+        assertThat(res.getBody()).contains(
+            "The like between userId: '2' and lineupId '999' does not exist"
+        );
+    }
 
-  @Test
-  void successfulGetLikesByUser() {
-    ResponseEntity<List<Like>> res =
-        restTemplate.exchange(
+    @Test
+    void successfulGetLikesByUser() {
+        ResponseEntity<List<Like>> res = restTemplate.exchange(
             "/api/likes/user/2",
             HttpMethod.GET,
             null,
-            new ParameterizedTypeReference<List<Like>>() {});
+            new ParameterizedTypeReference<List<Like>>() {}
+        );
 
-    List<Like> expectedListOfLikes =
-        List.of(
+        List<Like> expectedListOfLikes = List.of(
             new Like(2L, 2L, null),
             new Like(2L, 1L, null),
             new Like(2L, 22L, null),
             new Like(2L, 23L, null),
             new Like(2L, 12L, null),
             new Like(2L, 14L, null),
-            new Like(2L, 20L, null));
+            new Like(2L, 20L, null)
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(res.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("createdAt")
-        .isEqualTo(expectedListOfLikes);
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody())
+            .usingRecursiveComparison()
+            .ignoringFields("createdAt")
+            .isEqualTo(expectedListOfLikes);
+    }
 
-  @Test
-  void getLikesOnNonexistentUser() {
-    ResponseEntity<String> res =
-        restTemplate.exchange("/api/likes/user/999", HttpMethod.GET, null, String.class);
+    @Test
+    void getLikesOnNonexistentUser() {
+        ResponseEntity<String> res = restTemplate.exchange(
+            "/api/likes/user/999",
+            HttpMethod.GET,
+            null,
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(res.getBody()).contains("User not found");
-    assertThat(res.getBody()).contains("User with id: '999' was not found");
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("User not found");
+        assertThat(res.getBody()).contains("User with id: '999' was not found");
+    }
 
-  @Test
-  void successfulGetLikesByLineup() {
-    ResponseEntity<List<Like>> res =
-        restTemplate.exchange(
+    @Test
+    void successfulGetLikesByLineup() {
+        ResponseEntity<List<Like>> res = restTemplate.exchange(
             "/api/likes/lineup/2",
             HttpMethod.GET,
             null,
-            new ParameterizedTypeReference<List<Like>>() {});
+            new ParameterizedTypeReference<List<Like>>() {}
+        );
 
-    List<Like> expectedLikes = List.of(new Like(1L, 2L, null), new Like(2L, 2L, null));
+        List<Like> expectedLikes = List.of(
+            new Like(1L, 2L, null),
+            new Like(2L, 2L, null)
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(res.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("createdAt")
-        .isEqualTo(expectedLikes);
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody())
+            .usingRecursiveComparison()
+            .ignoringFields("createdAt")
+            .isEqualTo(expectedLikes);
+    }
 
-  @Test
-  void getLikesByLineupOnNonexistentLineup() {
-    ResponseEntity<String> res =
-        restTemplate.exchange("/api/likes/lineup/999", HttpMethod.GET, null, String.class);
+    @Test
+    void getLikesByLineupOnNonexistentLineup() {
+        ResponseEntity<String> res = restTemplate.exchange(
+            "/api/likes/lineup/999",
+            HttpMethod.GET,
+            null,
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(res.getBody()).contains("Lineup not found");
-    assertThat(res.getBody()).contains("No lineup with id: '999' exists");
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("Lineup not found");
+        assertThat(res.getBody()).contains("No lineup with id: '999' exists");
+    }
 
-  @Test
-  void successfulGetLikeCountByLineup() {
-    ResponseEntity<Long> res =
-        restTemplate.exchange("/api/likes/lineup/2/count", HttpMethod.GET, null, Long.class);
+    @Test
+    void successfulGetLikeCountByLineup() {
+        ResponseEntity<Long> res = restTemplate.exchange(
+            "/api/likes/lineup/2/count",
+            HttpMethod.GET,
+            null,
+            Long.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(res.getBody()).isEqualTo(2);
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(res.getBody()).isEqualTo(2);
+    }
 
-  @Test
-  void getLikeCountByLineupOnNonexistentLineup() {
-    ResponseEntity<String> res =
-        restTemplate.exchange("/api/likes/lineup/999/count", HttpMethod.GET, null, String.class);
+    @Test
+    void getLikeCountByLineupOnNonexistentLineup() {
+        ResponseEntity<String> res = restTemplate.exchange(
+            "/api/likes/lineup/999/count",
+            HttpMethod.GET,
+            null,
+            String.class
+        );
 
-    assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(res.getBody()).contains("Lineup not found");
-    assertThat(res.getBody()).contains("No lineup with id: '999' exists");
-  }
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(res.getBody()).contains("Lineup not found");
+        assertThat(res.getBody()).contains("No lineup with id: '999' exists");
+    }
 }
