@@ -41,3 +41,11 @@ run = "./mvnw -B clean generate-sources verify"
 [tasks.generate-sources]
 description = "Generate jOOQ sources"
 run = "./mvnw generate-sources"
+
+[tasks.format]
+description = "Format code with Spotless (Eclipse JDT)"
+run = "./mvnw spotless:apply"
+
+[tasks.format-check]
+description = "Check code formatting with Spotless (Eclipse JDT)"
+run = "./mvnw spotless:check"

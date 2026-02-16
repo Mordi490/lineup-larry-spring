@@ -83,6 +83,8 @@ mise run package
 mise run install
 mise run generate-sources
 mise run ci
+mise run format
+mise run format-check
 ```
 
 ## API Docs
