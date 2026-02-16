@@ -69,8 +69,7 @@ public class GlobalExceptionController extends ResponseEntityExceptionHandler {
             e.getRequiredType() != null
                 ? e.getRequiredType().getSimpleName()
                 : "unknown";
-        String detail = String.format(
-            "Invalid value '%s' for parameter '%s'. Expected type: '%s'",
+        String detail = "Invalid value '%s' for parameter '%s'. Expected type: '%s'".formatted(
             e.getValue(),
             parameterName,
             expectedType

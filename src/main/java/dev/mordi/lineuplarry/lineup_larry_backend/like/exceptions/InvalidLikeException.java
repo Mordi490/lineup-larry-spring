@@ -23,8 +23,7 @@ public abstract class InvalidLikeException extends ApiProblemException {
                 HttpStatus.NOT_FOUND,
                 "likes/not-found",
                 "Like not found",
-                String.format(
-                    "The like between userId: '%d' and lineupId '%d' does not exist",
+                "The like between userId: '%d' and lineupId '%d' does not exist".formatted(
                     userId,
                     lineupId
                 ),
