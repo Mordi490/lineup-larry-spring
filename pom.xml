@@ -35,6 +35,7 @@
         <testcontainers-jooq-codegen-maven-plugin.version>1.0.0
         </testcontainers-jooq-codegen-maven-plugin.version>
         <springdoc-openapi.version>3.0.1</springdoc-openapi.version>
+        <spotless-maven-plugin.version>3.2.1</spotless-maven-plugin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -236,6 +237,20 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless-maven-plugin.version}</version>
+                <configuration>
+                    <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <eclipse />
+                    </java>
+                </configuration>
             </plugin>
         </plugins>
     </build>
