@@ -38,7 +38,8 @@ public class LineupControllerTest {
     @MockitoBean
     LineupService lineupService;
 
-    private final ObjectMapper om = new ObjectMapper();
+    @Autowired
+    ObjectMapper om;
 
     private User userWithLineups;
     private User userWithNoLineups;
