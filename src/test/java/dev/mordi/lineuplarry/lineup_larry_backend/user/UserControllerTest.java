@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +18,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(UserController.class)
 @ExtendWith(MockitoExtension.class)
@@ -31,7 +31,9 @@ public class UserControllerTest {
     @MockitoBean
     UserService userService;
 
-    private final ObjectMapper om = new ObjectMapper();
+    @Autowired
+    ObjectMapper om;
+
     private User user;
 
     @BeforeEach
@@ -105,29 +107,25 @@ public class UserControllerTest {
         when(userService.createUser(userToCreate)).thenReturn(
             expectedCreatedUser
         );
-        try {
-            String userToCreateJson = om.writeValueAsString(userToCreate);
-            String expectedCreateUserJson = om.writeValueAsString(
-                expectedCreatedUser
-            );
+        String userToCreateJson = om.writeValueAsString(userToCreate);
+        String expectedCreateUserJson = om.writeValueAsString(
+            expectedCreatedUser
+        );
 
-            var result = mockMvc
-                .perform(
-                    post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userToCreateJson)
-                )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(3))
-                .andReturn();
+        var result = mockMvc
+            .perform(
+                post("/api/users")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(userToCreateJson)
+            )
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(3))
+            .andReturn();
 
-            assertThat(result.getResponse().getContentAsString()).isEqualTo(
-                expectedCreateUserJson
-            );
-            verify(userService).createUser(userToCreate);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        assertThat(result.getResponse().getContentAsString()).isEqualTo(
+            expectedCreateUserJson
+        );
+        verify(userService).createUser(userToCreate);
     }
 
     @Test
@@ -141,36 +139,30 @@ public class UserControllerTest {
 
         when(userService.createUser(userToFailToCreate)).thenThrow(exception);
 
-        try {
-            String userToFailToCreateJson = om.writeValueAsString(
-                userToFailToCreate
-            );
+        String userToFailToCreateJson = om.writeValueAsString(
+            userToFailToCreate
+        );
 
-            mockMvc
-                .perform(
-                    post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userToFailToCreateJson)
+        mockMvc
+            .perform(
+                post("/api/users")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(userToFailToCreateJson)
+            )
+            .andExpect(status().isBadRequest()) // Assuming you return 400 Bad Request for this exception
+            .andExpect(
+                jsonPath("$.title").value("The userId provided is not valid")
+            )
+            .andExpect(
+                jsonPath("$.detail").value(
+                    "Do not supply id when creating a user\nThe id '" +
+                        userIdToInvalidate +
+                        "' is invalid"
                 )
-                .andExpect(status().isBadRequest()) // Assuming you return 400 Bad Request for this exception
-                .andExpect(
-                    jsonPath("$.title").value(
-                        "The userId provided is not valid"
-                    )
-                )
-                .andExpect(
-                    jsonPath("$.detail").value(
-                        "Do not supply id when creating a user\nThe id '" +
-                            userIdToInvalidate +
-                            "' is invalid"
-                    )
-                )
-                .andReturn();
+            )
+            .andReturn();
 
-            verify(userService).createUser(userToFailToCreate);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        verify(userService).createUser(userToFailToCreate);
     }
 
     @Test
@@ -183,31 +175,27 @@ public class UserControllerTest {
             exception
         );
 
-        try {
-            String userWithEmptyUsernameJson = om.writeValueAsString(
-                userWithEmptyUsername
-            );
+        String userWithEmptyUsernameJson = om.writeValueAsString(
+            userWithEmptyUsername
+        );
 
-            var res = mockMvc
-                .perform(
-                    post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userWithEmptyUsernameJson)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid data"))
-                .andReturn();
+        var res = mockMvc
+            .perform(
+                post("/api/users")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(userWithEmptyUsernameJson)
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.title").value("Invalid data"))
+            .andReturn();
 
-            assertThat(res.getResponse().getContentAsString()).contains(
-                "username: username cannot be empty"
-            );
-            assertThat(res.getResponse().getContentType()).isEqualTo(
-                MediaType.APPLICATION_PROBLEM_JSON.toString()
-            );
-            verify(userService, never()).createUser(userWithEmptyUsername);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        assertThat(res.getResponse().getContentAsString()).contains(
+            "username: username cannot be empty"
+        );
+        assertThat(res.getResponse().getContentType()).isEqualTo(
+            MediaType.APPLICATION_PROBLEM_JSON.toString()
+        );
+        verify(userService, never()).createUser(userWithEmptyUsername);
     }
 
     @Test
@@ -220,31 +208,27 @@ public class UserControllerTest {
             exception
         );
 
-        try {
-            String userWithBlankUsernameJson = om.writeValueAsString(
-                userWithBlankUsername
-            );
+        String userWithBlankUsernameJson = om.writeValueAsString(
+            userWithBlankUsername
+        );
 
-            var res = mockMvc
-                .perform(
-                    post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userWithBlankUsernameJson)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid data"))
-                .andReturn();
+        var res = mockMvc
+            .perform(
+                post("/api/users")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(userWithBlankUsernameJson)
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.title").value("Invalid data"))
+            .andReturn();
 
-            assertThat(res.getResponse().getContentAsString()).contains(
-                "username: username cannot be blank"
-            );
-            assertThat(res.getResponse().getContentType()).isEqualTo(
-                MediaType.APPLICATION_PROBLEM_JSON.toString()
-            );
-            verify(userService, never()).createUser(userWithBlankUsername);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        assertThat(res.getResponse().getContentAsString()).contains(
+            "username: username cannot be blank"
+        );
+        assertThat(res.getResponse().getContentType()).isEqualTo(
+            MediaType.APPLICATION_PROBLEM_JSON.toString()
+        );
+        verify(userService, never()).createUser(userWithBlankUsername);
     }
 
     @Test
@@ -279,7 +263,7 @@ public class UserControllerTest {
                 MediaType.APPLICATION_PROBLEM_JSON.toString()
             );
             verify(userService, never()).createUser(userWithEmptyUsername);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -304,7 +288,7 @@ public class UserControllerTest {
                 .andExpect(status().isOk());
 
             verify(userService).updateUser(userId, updatedUser);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -346,7 +330,7 @@ public class UserControllerTest {
                 .andReturn();
 
             verify(userService).updateUser(nonExistentUserId, updatedUser);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -384,7 +368,7 @@ public class UserControllerTest {
                 userWithNullUsername.id(),
                 userWithNullUsername
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -425,7 +409,7 @@ public class UserControllerTest {
                 userWithEmptyUsername.id(),
                 userWithEmptyUsername
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -466,7 +450,7 @@ public class UserControllerTest {
                 userWithBlankUsername.id(),
                 userWithBlankUsername
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

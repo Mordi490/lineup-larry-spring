@@ -5,8 +5,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
@@ -25,6 +23,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 // TODO: look at how useless every test is
 
@@ -256,7 +256,7 @@ public class LineupControllerTest {
                 .andExpect(jsonPath("$.id").value(3));
 
             verify(lineupService).createLineup(lineupToCreate);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -298,7 +298,7 @@ public class LineupControllerTest {
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(3));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
 
@@ -338,7 +338,7 @@ public class LineupControllerTest {
                 newLineupData.id(),
                 newLineupData
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -393,7 +393,7 @@ public class LineupControllerTest {
                 lineupWithBlankTitle.id(),
                 lineupWithBlankTitle
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -435,7 +435,7 @@ public class LineupControllerTest {
                 lineupWithEmptyTitle.id(),
                 lineupWithEmptyTitle
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -477,7 +477,7 @@ public class LineupControllerTest {
                 lineupWithEmptyTitle.id(),
                 lineupWithEmptyTitle
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -519,7 +519,7 @@ public class LineupControllerTest {
                 lineupWithEmptyBody.id(),
                 lineupWithEmptyBody
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -548,7 +548,7 @@ public class LineupControllerTest {
             assertThat(res.getResponse().getContentType()).isEqualTo(
                 MediaType.APPLICATION_PROBLEM_JSON.toString()
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -577,7 +577,7 @@ public class LineupControllerTest {
             assertThat(res.getResponse().getContentType()).isEqualTo(
                 MediaType.APPLICATION_PROBLEM_JSON.toString()
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
