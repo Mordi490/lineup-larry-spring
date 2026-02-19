@@ -1,0 +1,9 @@
+# Eclipse import order for Spotless
+0=java
+1=javax
+2=jakarta
+3=org
+4=com
+5=dev
+6=dev.mordi
+7=\#

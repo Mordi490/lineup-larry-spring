@@ -248,7 +248,14 @@
                             <include>src/main/java/**/*.java</include>
                             <include>src/test/java/**/*.java</include>
                         </includes>
-                        <eclipse />
+                        <importOrder>
+                            <file>${project.basedir}/eclipse.importorder</file>
+                        </importOrder>
+                        <eclipse>
+                            <version>4.35</version>
+                            <file
+                            >${project.basedir}/eclipse-formatter.xml</file>
+                        </eclipse>
                     </java>
                 </configuration>
             </plugin>
