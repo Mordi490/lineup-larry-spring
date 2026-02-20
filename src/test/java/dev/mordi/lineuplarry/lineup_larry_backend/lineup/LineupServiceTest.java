@@ -1,9 +1,10 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
-import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
-import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
-import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,10 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
+import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
+import dev.mordi.lineuplarry.lineup_larry_backend.lineup.exceptions.InvalidLineupException;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.User;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -44,19 +45,27 @@ public class LineupServiceTest {
         User userWithLineups = new User(1L, "userOne");
         User userWithoutLineups = new User(2L, "userTwo");
 
-        lineupOne = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L, null, null, "userOne");
-        lineupTwo = new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 1L, null, null, "userOne");
-        lineupThree = new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "titleThree", "bodyThree", 1L, null, null, "userOne");
-        lineupFour = new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "same name", "bodyThree", 1L, null, null, "userOne");
-        lineupFive = new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree", 1L, null, null, "userOne");
-        lineupSix = new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree", 1L, null, null, "userOne");
-        lineupSeven = new LineupWithAuthorDTO(7L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree", 2L, null, null, "userTwo");
+        lineupOne = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "titleOne", "bodyOne", 1L,
+                null, null, "userOne");
+        lineupTwo = new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "titleTwo", "bodyTwo", 1L,
+                null, null, "userOne");
+        lineupThree = new LineupWithAuthorDTO(3L, Agent.BRIMSTONE, Map.BIND, "titleThree",
+                "bodyThree", 1L, null, null, "userOne");
+        lineupFour = new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "same name", "bodyThree",
+                1L, null, null, "userOne");
+        lineupFive = new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name",
+                "bodyThree", 1L, null, null, "userOne");
+        lineupSix = new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyThree",
+                1L, null, null, "userOne");
+        lineupSeven = new LineupWithAuthorDTO(7L, Agent.KILLJOY, Map.ICEBOX, "same name",
+                "bodyThree", 2L, null, null, "userTwo");
     }
 
     // Do I ever want this?
     @Test
     void getAllLineup() {
-        List<LineupWithAuthorDTO> allLineups = Arrays.asList(lineupOne, lineupTwo, lineupThree, lineupFour, lineupFive);
+        List<LineupWithAuthorDTO> allLineups = Arrays.asList(lineupOne, lineupTwo, lineupThree,
+                lineupFour, lineupFive);
         when(lineupRepository.getLineups(null, null, null, 20L, null)).thenReturn(allLineups);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, null, null, 20L, null);
@@ -79,7 +88,8 @@ public class LineupServiceTest {
     @Test
     void getAllLineupFilteredByAgent() {
         List<LineupWithAuthorDTO> allSovaLineups = Arrays.asList(lineupOne, lineupTwo);
-        when(lineupRepository.getLineups(null, Agent.SOVA, null, 20L, null)).thenReturn(allSovaLineups);
+        when(lineupRepository.getLineups(null, Agent.SOVA, null, 20L, null))
+                .thenReturn(allSovaLineups);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, "sova", null, 20L, null);
 
@@ -90,7 +100,8 @@ public class LineupServiceTest {
     @Test
     void getAllLineupFilteredByAgentPagination() {
         List<LineupWithAuthorDTO> lastSovaLineup = List.of(lineupTwo);
-        when(lineupRepository.getLineups(null, Agent.SOVA, null, 1L, 1L)).thenReturn(lastSovaLineup);
+        when(lineupRepository.getLineups(null, Agent.SOVA, null, 1L, 1L))
+                .thenReturn(lastSovaLineup);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, "sova", null, 1L, 1L);
 
@@ -101,7 +112,8 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByMap() {
         List<LineupWithAuthorDTO> allAscentLineups = Arrays.asList(lineupOne, lineupTwo);
-        when(lineupRepository.getLineups(null, null, Map.ASCENT, 20L, null)).thenReturn(allAscentLineups);
+        when(lineupRepository.getLineups(null, null, Map.ASCENT, 20L, null))
+                .thenReturn(allAscentLineups);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, null, "ascent", 20L, null);
 
@@ -112,7 +124,8 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByMapPagination() {
         List<LineupWithAuthorDTO> secondAscentMap = List.of(lineupTwo);
-        when(lineupRepository.getLineups(null, null, Map.ASCENT, 1L, 1L)).thenReturn(secondAscentMap);
+        when(lineupRepository.getLineups(null, null, Map.ASCENT, 1L, 1L))
+                .thenReturn(secondAscentMap);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, null, "ascent", 1L, 1L);
 
@@ -123,7 +136,8 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByTitle() {
         List<LineupWithAuthorDTO> sameNameLineups = Arrays.asList(lineupFour, lineupFive);
-        when(lineupRepository.getLineups("same name", null, null, 20L, null)).thenReturn(sameNameLineups);
+        when(lineupRepository.getLineups("same name", null, null, 20L, null))
+                .thenReturn(sameNameLineups);
 
         List<LineupWithAuthorDTO> result = lineupService.getByTitle("same name", 20L, null);
 
@@ -134,7 +148,8 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByTitlePagination() {
         List<LineupWithAuthorDTO> secondSameNameLineup = List.of(lineupFive);
-        when(lineupRepository.getLineups("same name", null, null, 1L, 4L)).thenReturn(secondSameNameLineup);
+        when(lineupRepository.getLineups("same name", null, null, 1L, 4L))
+                .thenReturn(secondSameNameLineup);
 
         List<LineupWithAuthorDTO> result = lineupService.getByTitle("same name", 1L, 4L);
 
@@ -145,9 +160,11 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByAgentAndMap() {
         List<LineupWithAuthorDTO> cypherOnSunset = Collections.singletonList(lineupFour);
-        when(lineupRepository.getLineups(null, Agent.CYPHER, Map.SUNSET, 20L, null)).thenReturn(cypherOnSunset);
+        when(lineupRepository.getLineups(null, Agent.CYPHER, Map.SUNSET, 20L, null))
+                .thenReturn(cypherOnSunset);
 
-        List<LineupWithAuthorDTO> result = lineupService.getLineup(null, "cypher", "sunset", 20L, null);
+        List<LineupWithAuthorDTO> result = lineupService.getLineup(null, "cypher", "sunset", 20L,
+                null);
 
         assertThat(result).isEqualTo(cypherOnSunset);
         verify(lineupRepository).getLineups(null, Agent.CYPHER, Map.SUNSET, 20L, null);
@@ -156,7 +173,8 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByAgentAndMapPagination() {
         List<LineupWithAuthorDTO> secondSovaLineupOnAscent = List.of(lineupTwo);
-        when(lineupRepository.getLineups(null, Agent.SOVA, Map.ASCENT, 1L, 1L)).thenReturn(secondSovaLineupOnAscent);
+        when(lineupRepository.getLineups(null, Agent.SOVA, Map.ASCENT, 1L, 1L))
+                .thenReturn(secondSovaLineupOnAscent);
 
         List<LineupWithAuthorDTO> result = lineupService.getLineup(null, "sova", "ascent", 1L, 1L);
 
@@ -166,10 +184,13 @@ public class LineupServiceTest {
 
     @Test
     void getLineupFilterByAgentAndMapAndTitle() {
-        List<LineupWithAuthorDTO> cypherOnSunsetSameNameTitle = Collections.singletonList(lineupFour);
-        when(lineupRepository.getLineups("same name", Agent.CYPHER, Map.SUNSET, 20L, null)).thenReturn(cypherOnSunsetSameNameTitle);
+        List<LineupWithAuthorDTO> cypherOnSunsetSameNameTitle = Collections
+                .singletonList(lineupFour);
+        when(lineupRepository.getLineups("same name", Agent.CYPHER, Map.SUNSET, 20L, null))
+                .thenReturn(cypherOnSunsetSameNameTitle);
 
-        List<LineupWithAuthorDTO> result = lineupService.getLineup("same name", "cypher", "sunset", 20L, null);
+        List<LineupWithAuthorDTO> result = lineupService.getLineup("same name", "cypher", "sunset",
+                20L, null);
 
         assertThat(result).isEqualTo(cypherOnSunsetSameNameTitle);
         verify(lineupRepository).getLineups("same name", Agent.CYPHER, Map.SUNSET, 20L, null);
@@ -178,9 +199,11 @@ public class LineupServiceTest {
     @Test
     void getLineupFilterByAgentAndMapAndTitlePagination() {
         List<LineupWithAuthorDTO> twoLastSameNameLineups = List.of(lineupSix, lineupSeven);
-        when(lineupRepository.getLineups("same name", Agent.KILLJOY, Map.ICEBOX, 2L, 5L)).thenReturn(twoLastSameNameLineups);
+        when(lineupRepository.getLineups("same name", Agent.KILLJOY, Map.ICEBOX, 2L, 5L))
+                .thenReturn(twoLastSameNameLineups);
 
-        List<LineupWithAuthorDTO> result = lineupService.getLineup("same name", "killjoy", "icebox", 2L, 5L);
+        List<LineupWithAuthorDTO> result = lineupService.getLineup("same name", "killjoy", "icebox",
+                2L, 5L);
 
         assertThat(result).isEqualTo(twoLastSameNameLineups);
         verify(lineupRepository).getLineups("same name", Agent.KILLJOY, Map.ICEBOX, 2L, 5L);
@@ -207,7 +230,8 @@ public class LineupServiceTest {
     @Test
     void failGetLineupFilterByAgentAndMapInvalidStrings() {
         assertThatThrownBy(() -> lineupService.getLineup(null, "notJett", "notAMap", 20L, null))
-                .isInstanceOf(InvalidLineupException.InvalidAgentException.class) // agent fails first
+                .isInstanceOf(InvalidLineupException.InvalidAgentException.class) // agent fails
+                                                                                  // first
                 .hasMessage("The agent: 'notJett' is not a valid agent");
 
         verify(lineupRepository, never()).getLineups(null, Agent.JETT, Map.ASCENT, 20L, null);
@@ -249,10 +273,12 @@ public class LineupServiceTest {
     // get all lineups from user
     @Test
     void successfulGetLineupLineupsFromUserWithLineups() {
-        Optional<List<LineupWithAuthorDTO>> allLineupsFromUserOne = Optional.of(Arrays.asList(lineupOne, lineupTwo, lineupThree));
+        Optional<List<LineupWithAuthorDTO>> allLineupsFromUserOne = Optional
+                .of(Arrays.asList(lineupOne, lineupTwo, lineupThree));
         when(lineupRepository.getLineupsByUserId(1L, 20L, null)).thenReturn(allLineupsFromUserOne);
 
-        Optional<List<LineupWithAuthorDTO>> fetchedLineupsFromUser = lineupService.getAllLineupsFromUserId(1L, 20L, null);
+        Optional<List<LineupWithAuthorDTO>> fetchedLineupsFromUser = lineupService
+                .getAllLineupsFromUserId(1L, 20L, null);
 
         assertThat(fetchedLineupsFromUser).isPresent();
         assertThat(fetchedLineupsFromUser.get().size()).isEqualTo(3);
@@ -266,7 +292,8 @@ public class LineupServiceTest {
         Long userId = 2L;
         when(lineupRepository.getLineupsByUserId(userId, 20L, null)).thenReturn(emptyList);
 
-        Optional<List<LineupWithAuthorDTO>> fetchedList = lineupService.getAllLineupsFromUserId(userId, 20L, null);
+        Optional<List<LineupWithAuthorDTO>> fetchedList = lineupService
+                .getAllLineupsFromUserId(userId, 20L, null);
 
         assertThat(fetchedList).isPresent();
         verify(lineupRepository).getLineupsByUserId(userId, 20L, null);
@@ -275,10 +302,13 @@ public class LineupServiceTest {
     @Test
     void getLineupLineupsFromNonexistentUser() {
         Long nonexistentUserId = 999L;
-        InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(nonexistentUserId);
-        when(lineupRepository.getLineupsByUserId(nonexistentUserId, 20L, null)).thenThrow(exception);
+        InvalidLineupException.NoUserException exception = new InvalidLineupException.NoUserException(
+                nonexistentUserId);
+        when(lineupRepository.getLineupsByUserId(nonexistentUserId, 20L, null))
+                .thenThrow(exception);
 
-        assertThatThrownBy(() -> lineupService.getAllLineupsFromUserId(nonexistentUserId, 20L, null))
+        assertThatThrownBy(
+                () -> lineupService.getAllLineupsFromUserId(nonexistentUserId, 20L, null))
                 .isInstanceOf(InvalidLineupException.NoUserException.class)
                 .hasMessage("No user with id: '" + nonexistentUserId + "' exists");
 
@@ -288,8 +318,10 @@ public class LineupServiceTest {
     // create lineup
     @Test
     void successfulLineup() {
-        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created lineup title", "created body content", 1L, null, null);
-        Lineup lineupCreatedResponse = new Lineup(5L, Agent.SOVA, Map.ASCENT, lineupToCreate.title(), lineupToCreate.body(), lineupToCreate.userId(), null, null);
+        Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "created lineup title",
+                "created body content", 1L, null, null);
+        Lineup lineupCreatedResponse = new Lineup(5L, Agent.SOVA, Map.ASCENT,
+                lineupToCreate.title(), lineupToCreate.body(), lineupToCreate.userId(), null, null);
         when(lineupRepository.createLineup(lineupToCreate)).thenReturn(lineupCreatedResponse);
 
         Lineup actualResponse = lineupService.createLineup(lineupToCreate);
@@ -303,11 +335,14 @@ public class LineupServiceTest {
     @Test
     void declineLineupCreationDueToHavingId() {
         Long lineupId = 44L;
-        Lineup lineupToReject = new Lineup(lineupId, Agent.SOVA, Map.ASCENT, "muh title", "muh body", 1L, null, null);
+        Lineup lineupToReject = new Lineup(lineupId, Agent.SOVA, Map.ASCENT, "muh title",
+                "muh body", 1L, null, null);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupToReject))
                 .isInstanceOf(InvalidLineupException.IncludedLineupIdException.class)
-                .hasMessage("Do not supply an id when creating a lineup\nCannot create lineup with id: '" + lineupId + "'");
+                .hasMessage(
+                        "Do not supply an id when creating a lineup\nCannot create lineup with id: '"
+                                + lineupId + "'");
         verify(lineupRepository, never()).createLineup(lineupToReject);
     }
 
@@ -316,7 +351,8 @@ public class LineupServiceTest {
     // fail on blanks and empty title/content
     @Test
     void failCreateOnBlankTitle() {
-        Lineup lineupWithBlankTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "  ", "valid body", 1L, null, null);
+        Lineup lineupWithBlankTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "  ", "valid body",
+                1L, null, null);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithBlankTitle))
                 .isInstanceOf(InvalidLineupException.BlankTitleException.class)
@@ -326,7 +362,8 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnEmptyTitle() {
-        Lineup lineupWithEmptyTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "", "valid body", 1L, null, null);
+        Lineup lineupWithEmptyTitle = new Lineup(null, Agent.SOVA, Map.ASCENT, "", "valid body", 1L,
+                null, null);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithEmptyTitle))
                 .isInstanceOf(InvalidLineupException.EmptyTitleException.class)
@@ -336,7 +373,8 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnBlankBody() {
-        Lineup lineupWithBlankBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "  ", 1L, null, null);
+        Lineup lineupWithBlankBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "  ",
+                1L, null, null);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithBlankBody))
                 .isInstanceOf(InvalidLineupException.BlankBodyException.class)
@@ -346,7 +384,8 @@ public class LineupServiceTest {
 
     @Test
     void failCreateOnEmptyBody() {
-        Lineup lineupWithEmptyBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "", 1L, null, null);
+        Lineup lineupWithEmptyBody = new Lineup(null, Agent.SOVA, Map.ASCENT, "valid title", "", 1L,
+                null, null);
 
         assertThatThrownBy(() -> lineupService.createLineup(lineupWithEmptyBody))
                 .isInstanceOf(InvalidLineupException.EmptyBodyException.class)
@@ -357,7 +396,8 @@ public class LineupServiceTest {
     // update lineup
     @Test
     void successfulUpdateLineup() {
-        Lineup updatedLineup = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "updated title", lineupOne.body(), lineupOne.userId(), null, null);
+        Lineup updatedLineup = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(),
+                "updated title", lineupOne.body(), lineupOne.userId(), null, null);
         // LineupWithAuthorDTO updatedLineup = lineupOne.withTitle("updated title");
         doNothing().when(lineupRepository).updateLineup(updatedLineup);
 
@@ -369,7 +409,8 @@ public class LineupServiceTest {
     // fail updates on removal of id
     @Test
     void failUpdateOnChangedLineupIdChange() {
-        Lineup randomLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "some title", "some body", 2L, null, null);
+        Lineup randomLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "some title", "some body", 2L,
+                null, null);
 
         assertThatThrownBy(() -> lineupService.updateLineup(2L, randomLineup))
                 .isInstanceOf(InvalidLineupException.ChangedLineupIdException.class)
@@ -379,10 +420,12 @@ public class LineupServiceTest {
     // fail updates on same scenarios as creation, blank, empty...
     @Test
     void failUpdateOnBlankTitleUpdate() {
-        Lineup updatedLineupWithBlankTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "  ", lineupOne.body(), lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO updatedLineupWithBlankTitle = lineupOne.withTitle("  ");
+        Lineup updatedLineupWithBlankTitle = new Lineup(lineupOne.id(), lineupOne.agent(),
+                lineupOne.map(), "  ", lineupOne.body(), lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO updatedLineupWithBlankTitle = lineupOne.withTitle(" ");
 
-        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithBlankTitle.id(), updatedLineupWithBlankTitle))
+        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithBlankTitle.id(),
+                updatedLineupWithBlankTitle))
                 .isInstanceOf(InvalidLineupException.BlankTitleException.class)
                 .hasMessage("Lineup title cannot be blank");
         verify(lineupRepository, never()).updateLineup(updatedLineupWithBlankTitle);
@@ -390,10 +433,12 @@ public class LineupServiceTest {
 
     @Test
     void failUpdateOnEmptyTitleUpdate() {
-        Lineup updatedLineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), "", lineupOne.body(), lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO updatedLineupWithEmptyTitle = lineupOne.withTitle("");
+        Lineup updatedLineupWithEmptyTitle = new Lineup(lineupOne.id(), lineupOne.agent(),
+                lineupOne.map(), "", lineupOne.body(), lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO updatedLineupWithEmptyTitle = lineupOne.withTitle("");
 
-        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithEmptyTitle.id(), updatedLineupWithEmptyTitle))
+        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithEmptyTitle.id(),
+                updatedLineupWithEmptyTitle))
                 .isInstanceOf(InvalidLineupException.EmptyTitleException.class)
                 .hasMessage("Lineup title cannot be empty");
         verify(lineupRepository, never()).updateLineup(updatedLineupWithEmptyTitle);
@@ -401,10 +446,12 @@ public class LineupServiceTest {
 
     @Test
     void failUpdateOnBlankBodyUpdate() {
-        Lineup updatedLineupWithBlankBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "  ", lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO updatedLineupWithBlankBody = lineupOne.withBody("  ");
+        Lineup updatedLineupWithBlankBody = new Lineup(lineupOne.id(), lineupOne.agent(),
+                lineupOne.map(), lineupOne.title(), "  ", lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO updatedLineupWithBlankBody = lineupOne.withBody(" ");
 
-        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithBlankBody.id(), updatedLineupWithBlankBody))
+        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithBlankBody.id(),
+                updatedLineupWithBlankBody))
                 .isInstanceOf(InvalidLineupException.BlankBodyException.class)
                 .hasMessage("Lineup body cannot be blank");
         verify(lineupRepository, never()).updateLineup(updatedLineupWithBlankBody);
@@ -412,10 +459,12 @@ public class LineupServiceTest {
 
     @Test
     void failUpdateOnEmptyBodyUpdate() {
-        Lineup updatedLineupWithEmptyBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), "", lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO updatedLineupWithEmptyBody = lineupOne.withBody("");
+        Lineup updatedLineupWithEmptyBody = new Lineup(lineupOne.id(), lineupOne.agent(),
+                lineupOne.map(), lineupOne.title(), "", lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO updatedLineupWithEmptyBody = lineupOne.withBody("");
 
-        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithEmptyBody.id(), updatedLineupWithEmptyBody))
+        assertThatThrownBy(() -> lineupService.updateLineup(updatedLineupWithEmptyBody.id(),
+                updatedLineupWithEmptyBody))
                 .isInstanceOf(InvalidLineupException.EmptyBodyException.class)
                 .hasMessage("Lineup body cannot be empty");
         verify(lineupRepository, never()).updateLineup(updatedLineupWithEmptyBody);
@@ -423,27 +472,31 @@ public class LineupServiceTest {
 
     @Test
     void failUpdateOnNullTitle() {
-        Lineup lineupWithNullTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), null, lineupOne.body(), lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO lineupWithNullTitle = lineupOne.withTitle(null);
+        Lineup lineupWithNullTitle = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(),
+                null, lineupOne.body(), lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO lineupWithNullTitle = lineupOne.withTitle(null);
 
-        assertThatThrownBy(() -> lineupService.updateLineup(lineupWithNullTitle.id(), lineupWithNullTitle))
+        assertThatThrownBy(
+                () -> lineupService.updateLineup(lineupWithNullTitle.id(), lineupWithNullTitle))
                 .isInstanceOf(InvalidLineupException.NullTitleException.class)
                 .hasMessage("Lineup title cannot be null");
         verify(lineupRepository, never()).updateLineup(lineupWithNullTitle);
     }
 
-
     @Test
     void failUpdateOnNullBody() {
-        Lineup lineupWithNullBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(), lineupOne.title(), null, lineupOne.userId(), null, null);
-        //LineupWithAuthorDTO lineupWithNullBody = lineupOne.withBody(null);
+        Lineup lineupWithNullBody = new Lineup(lineupOne.id(), lineupOne.agent(), lineupOne.map(),
+                lineupOne.title(), null, lineupOne.userId(), null, null);
+        // LineupWithAuthorDTO lineupWithNullBody = lineupOne.withBody(null);
 
-        assertThatThrownBy(() -> lineupService.updateLineup(lineupWithNullBody.id(), lineupWithNullBody))
+        assertThatThrownBy(
+                () -> lineupService.updateLineup(lineupWithNullBody.id(), lineupWithNullBody))
                 .isInstanceOf(InvalidLineupException.NullBodyException.class)
                 .hasMessage("Lineup body cannot be null");
         verify(lineupRepository, never()).updateLineup(lineupWithNullBody);
     }
-    // fail updates when userId does not match with the user's principal, TODO: AFTER AUTH HAS BEEN IMPL
+    // fail updates when userId does not match with the user's principal, TODO:
+    // AFTER AUTH HAS BEEN IMPL
 
     // delete lineup
     @Test
@@ -452,7 +505,8 @@ public class LineupServiceTest {
 
         doNothing().when(lineupRepository).deleteLineup(lineupIdToDelete);
 
-        assertThatCode(() -> lineupService.deleteLineup(lineupIdToDelete)).doesNotThrowAnyException();
+        assertThatCode(() -> lineupService.deleteLineup(lineupIdToDelete))
+                .doesNotThrowAnyException();
 
         verify(lineupRepository).deleteLineup(lineupIdToDelete);
     }
@@ -463,8 +517,8 @@ public class LineupServiceTest {
     }
 
     /**
-     * lineupThree = new Lineup(4L, "same name", "bodyThree", 1L);
-     * lineupThree = new Lineup(5L, "same name", "bodyThree", 1L);
+     * lineupThree = new Lineup(4L, "same name", "bodyThree", 1L); lineupThree = new
+     * Lineup(5L, "same name", "bodyThree", 1L);
      */
 
 }

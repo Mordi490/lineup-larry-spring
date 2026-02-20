@@ -1,7 +1,9 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,14 +11,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -132,7 +131,8 @@ public class UserServiceTest {
     void failCreateWithSetId() {
         assertThatThrownBy(() -> userService.createUser(userToCreateWithSetId))
                 .isInstanceOf(InvalidUserException.IncludedUserIdException.class)
-                .hasMessage("Do not supply id when creating a user\nThe id '" + userToCreateWithSetId.id() + "' is invalid");
+                .hasMessage("Do not supply id when creating a user\nThe id '"
+                        + userToCreateWithSetId.id() + "' is invalid");
 
         verify(userRepository, never()).createUser(userToCreateWithSetId);
     }
@@ -177,7 +177,8 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.updateUser(id, userWithMismatchedId))
                 .isInstanceOf(InvalidUserException.IdDoesNotMatchUserException.class)
-                .hasMessage("Id does not match for this user\nExpected: '" + id + "' but got: '" + userWithMismatchedId.id() + "'");
+                .hasMessage("Id does not match for this user\nExpected: '" + id + "' but got: '"
+                        + userWithMismatchedId.id() + "'");
 
         verify(userRepository, never()).updateUser(userWithMismatchedId.id(), userWithMismatchedId);
     }

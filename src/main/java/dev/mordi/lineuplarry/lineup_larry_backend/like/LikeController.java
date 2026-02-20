@@ -1,10 +1,12 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.like;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.like.exceptions.InvalidLikeException;
 import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import dev.mordi.lineuplarry.lineup_larry_backend.like.exceptions.InvalidLikeException;
 
 @RestController
 @RequestMapping("/api/likes")
@@ -23,15 +25,9 @@ public class LikeController {
 
     // NB! will change once auth has been impl
     @GetMapping("/user/{userId}/lineup/{lineupId}")
-    public ResponseEntity<Like> getById(
-        @PathVariable Long userId,
-        @PathVariable Long lineupId
-    ) {
-        Like like = likeService
-            .getById(userId, lineupId)
-            .orElseThrow(() ->
-                new InvalidLikeException.LikeNotFound(userId, lineupId)
-            );
+    public ResponseEntity<Like> getById(@PathVariable Long userId, @PathVariable Long lineupId) {
+        Like like = likeService.getById(userId, lineupId)
+                .orElseThrow(() -> new InvalidLikeException.LikeNotFound(userId, lineupId));
         return ResponseEntity.ok(like);
     }
 
@@ -60,9 +56,7 @@ public class LikeController {
 
     // TODO: reconsider if this is even needed
     @GetMapping("/lineup/{lineupId}/count")
-    public ResponseEntity<Long> getLikeCountByLineup(
-        @PathVariable Long lineupId
-    ) {
+    public ResponseEntity<Long> getLikeCountByLineup(@PathVariable Long lineupId) {
         long likeCount = likeService.getLikeCountByLineup(lineupId);
         return ResponseEntity.ok(likeCount);
     }

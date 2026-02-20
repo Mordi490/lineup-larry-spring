@@ -14,10 +14,9 @@ class TestcontainersConfiguration {
     @SuppressWarnings("resource")
     PostgreSQLContainer postgresContainer() {
         PostgreSQLContainer container = new PostgreSQLContainer(
-            DockerImageName.parse("postgres:18-alpine")
-        )
-            .withUsername("testEnvUsername")
-            .withPassword("testEnvPassword");
+                DockerImageName.parse("postgres:18-alpine"))
+                .withUsername("testEnvUsername")
+                .withPassword("testEnvPassword");
         return container;
     }
 }

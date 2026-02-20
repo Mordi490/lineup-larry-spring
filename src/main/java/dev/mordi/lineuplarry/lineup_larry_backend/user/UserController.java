@@ -1,11 +1,14 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.user;
 
-import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
-import jakarta.validation.Valid;
 import java.util.List;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import dev.mordi.lineuplarry.lineup_larry_backend.user.exceptions.InvalidUserException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -29,11 +32,8 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = userService
-            .getById(id)
-            .orElseThrow(() ->
-                new InvalidUserException.UserNotFoundException(id)
-            );
+        User user = userService.getById(id)
+                .orElseThrow(() -> new InvalidUserException.UserNotFoundException(id));
         return ResponseEntity.ok(user);
     }
 
@@ -44,10 +44,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public void updateUser(
-        @PathVariable Long id,
-        @Valid @RequestBody User user
-    ) {
+    public void updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
         userService.updateUser(id, user);
     }
 
@@ -58,9 +55,7 @@ public class UserController {
     }
 
     @GetMapping("/summary/{id}")
-    public ResponseEntity<UserSummaryDTO> getUserSummary(
-        @PathVariable Long id
-    ) {
+    public ResponseEntity<UserSummaryDTO> getUserSummary(@PathVariable Long id) {
         UserSummaryDTO ar = userService.getUserSummary(id);
         return new ResponseEntity<>(ar, HttpStatus.OK);
     }

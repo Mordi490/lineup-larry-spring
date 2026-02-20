@@ -1,6 +1,5 @@
 package dev.mordi.lineuplarry.lineup_larry_backend;
 
-
 import org.springframework.boot.SpringApplication;
 
 public class TestLineupLarryBackendApplication {
