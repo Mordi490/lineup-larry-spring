@@ -5,33 +5,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.json.JsonCompareMode;
-import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-// Look in
+import dev.mordi.lineuplarry.lineup_larry_backend.shared.RestIntegrationTestSupport;
+
+// Look into this
 // @SpringJUnitConfig(WebConfig.class) // Specify the configuration to load
 
-// Remember to remove once we've migrated to the RestTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("/test-data.sql")
 @Testcontainers
 @AutoConfigureRestTestClient
-public class LikeIntegrationTest {
-
-    @Autowired
-    RestTestClient client;
+public class LikeIntegrationTest extends RestIntegrationTestSupport {
 
     @Container
     @ServiceConnection
@@ -40,14 +36,9 @@ public class LikeIntegrationTest {
     // test getAll endpoint
     @Test
     void successGetAllLikes() {
-        List<Like> likes = client.get()
-                .uri("/api/likes")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<List<Like>>() {
-                })
-                .returnResult()
-                .getResponseBody();
+        List<Like> likes = getOkBody("/api/likes",
+                new ParameterizedTypeReference<List<Like>>() {
+                });
 
         List<Like> expectedArray = List.of(new Like(1L, 2L, null), new Like(1L, 3L, null),
                 new Like(1L, 11L, null), new Like(1L, 22L, null), new Like(1L, 18L, null),
@@ -85,13 +76,9 @@ public class LikeIntegrationTest {
     @Test
     void likeAnAlreadyLikedLineup() {
         // Confirm that the lineup is already liked
-        var response = client.get()
-                .uri("/api/likes/user/2/lineup/2")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Like.class)
-                .returnResult()
-                .getResponseBody();
+        var response = getOkBody("/api/likes/user/2/lineup/2",
+                new ParameterizedTypeReference<Like>() {
+                });
 
         Like like = new Like(2L, 2L, null);
 
@@ -106,8 +93,6 @@ public class LikeIntegrationTest {
                 .returnResult()
                 .getResponseBody();
 
-        System.out.println(response);
-        System.out.println(response2);
         assertThat(response2.createdAt()).isNotNull();
         assertThat(response2).isEqualTo(response);
     }
@@ -115,17 +100,10 @@ public class LikeIntegrationTest {
     // test getting a like by id
     @Test
     void getNonexistentLikeById() {
-        client.get()
-                .uri("/api/likes/user/2/lineup/999")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(String.class)
-                .value(body -> {
-                    assertThat(body).contains("Like not found");
-                    assertThat(body).contains("LIKE_NOT_FOUND");
-                })
-                .returnResult()
-                .getResponseBody();
+        String response = getBody("/api/likes/user/2/lineup/999", HttpStatus.NOT_FOUND);
+
+        assertThat(response).contains("Like not found");
+        assertThat(response).contains("LIKE_NOT_FOUND");
     }
 
     // test removing a like
@@ -168,14 +146,9 @@ public class LikeIntegrationTest {
 
     @Test
     void successfulGetLikesByUser() {
-        List<Like> likes = client.get()
-                .uri("/api/likes/user/2")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<List<Like>>() {
-                })
-                .returnResult()
-                .getResponseBody();
+        List<Like> likes = getOkBody("/api/likes/user/2",
+                new ParameterizedTypeReference<List<Like>>() {
+                });
 
         assertThat(likes).hasSize(7);
         assertThat(likes).extracting(Like::userId).containsOnly(2L);

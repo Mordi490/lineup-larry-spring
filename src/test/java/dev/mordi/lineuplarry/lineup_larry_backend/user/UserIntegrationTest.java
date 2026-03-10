@@ -3,135 +3,164 @@ package dev.mordi.lineuplarry.lineup_larry_backend.user;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.json.JsonCompareMode;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupIdTitleDTO;
+import dev.mordi.lineuplarry.lineup_larry_backend.lineup.LineupWithAuthorDTO;
+import dev.mordi.lineuplarry.lineup_larry_backend.shared.RestIntegrationTestSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("/test-data.sql")
 @Testcontainers
-@AutoConfigureMockMvc
-@AutoConfigureTestRestTemplate
-public class UserIntegrationTest {
-
-    // opting for TestRestTemplate for now, might swap to RestClient once stable
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    private static HttpHeaders headers;
+@AutoConfigureRestTestClient
+public class UserIntegrationTest extends RestIntegrationTestSupport {
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
-    @BeforeAll
-    static void initHeader() {
-        headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-    }
-
     @Test
     void successfulGetAll() {
-        ResponseEntity<List<User>> res = restTemplate.exchange("/api/users", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
-                });
-
         // expect the users insert by the test-data.sql
         List<User> expectedUserList = List.of(new User(1L, "userOne"), new User(2L, "userTwo"),
                 new User(3L, "userThree"), new User(4L, "userFour"), new User(5L, "userFive"));
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(expectedUserList.size());
-        assertThat(res.getBody()).isEqualTo(expectedUserList);
+        List<User> users = getOkBody("/api/users", new ParameterizedTypeReference<List<User>>() {
+        });
+
+        assertThat(users).isEqualTo(expectedUserList);
     }
 
     @Test
     void successfulGetById() {
-        ResponseEntity<Optional<User>> res = restTemplate.exchange("/api/users/1", HttpMethod.GET,
-                null, new ParameterizedTypeReference<>() {
-                });
+        var response = getOkBody("/api/users/1", new ParameterizedTypeReference<Optional<User>>() {
+        });
 
         User expectedUser = new User(1L, "userOne");
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotEmpty();
-        assertThat(res.getBody().get()).isEqualTo(expectedUser);
+        assertThat(response).isNotEmpty();
+        assertThat(response.get()).isEqualTo(expectedUser);
     }
 
     @Test
     void getByIdOnNonexistentId() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/999", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(res.getBody()).contains("User not found");
-        assertThat(res.getBody()).contains("USER_NOT_FOUND");
+        client.get()
+                .uri("/api/users/999")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                          "status": 404,
+                          "title": "User not found",
+                          "code": "USER_NOT_FOUND",
+                          "detail": "User with id: '999' was not found",
+                          "instance": "/api/users/999",
+                          "type": "https://lineup-larry.dev/problems/users/not-found"
+                        }
+                            """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void failGetByIdOnString() {
-        var res = restTemplate.exchange("/api/users/someString", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody())
-                .contains("Invalid value 'someString' for parameter 'id'. Expected type: 'Long'");
+        // TODO: reconsider this test case
+        client.get()
+                .uri("/api/users/someString")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_PARAMETER",
+                          "detail": "Invalid value 'someString' for parameter 'id'. Expected type: 'Long'",
+                          "instance": "/api/users/someString",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-parameter"
+                        }
+                            """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void successfulCreate() {
         User newUser = new User(null, "Bobby");
 
-        ResponseEntity<User> res = restTemplate.postForEntity("/api/users",
-                new HttpEntity<>(newUser, headers), User.class);
+        var response = client.post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(newUser)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(User.class)
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody().id()).isEqualTo(101);
+        assertThat(response.id()).isEqualTo(101);
     }
 
+    // TODO: rethink these test cases
+    // They validation could maybe be elsewhere
+    // Or at least use parameterized test
     @Test
     void successfulCreateWithoutId() {
         String userWithNoIdJsonTemplate = """
                 {"username":"Bobby"}\
                 """;
 
-        ResponseEntity<User> res = restTemplate.postForEntity("/api/users",
-                new HttpEntity<>(userWithNoIdJsonTemplate, headers), User.class);
+        var response = client.post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(userWithNoIdJsonTemplate)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(User.class)
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody().id()).isNotNull();
-        assertThat(res.getBody().id()).isEqualTo(101);
+        assertThat(response.id()).isEqualTo(101);
     }
 
+    // TODO: improve this error details, it looks bad
+    // "detail": "username: username cannot be empty; username: username cannot be
+    // null; username: username cannot be blank",
+    // the order is random
     @Test
     void failCreateOnNullUsername() {
         String userWithNullUsernameJsonTemplate = """
                 {"username":null}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/users",
-                new HttpEntity<>(userWithNullUsernameJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.toString()).contains("Invalid data");
-        assertThat(res.toString()).contains("username: username cannot be null");
+        client.post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(userWithNullUsernameJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """,
+                        JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -140,11 +169,23 @@ public class UserIntegrationTest {
                 {"username":""}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/users", HttpMethod.POST,
-                new HttpEntity<>(userWithEmptyUsernameJson, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("username: username cannot be empty");
+        client.post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(userWithEmptyUsernameJson)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """,
+                        JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -153,12 +194,23 @@ public class UserIntegrationTest {
                 {"username":"  "}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/users",
-                new HttpEntity<>(userWithBlankUsernameJson, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.toString()).contains("username: username cannot be blank");
+        client.post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(userWithBlankUsernameJson)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """,
+                        JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -166,65 +218,100 @@ public class UserIntegrationTest {
         // "userOne" is the initial name
         User updatedUser = new User(1L, "Bobby");
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/1", HttpMethod.PUT,
-                new HttpEntity<>(updatedUser, headers), String.class);
+        client.put()
+                .uri("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(updatedUser)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().isEmpty();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNull();
-
-        // confirm that the user was updated in the database
-        ResponseEntity<String> res2 = restTemplate.exchange("/api/users/1", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res2.getBody()).isEqualTo("""
-                {"id":1,"username":"Bobby"}\
-                """);
+        client.get()
+                .uri("/api/users/1")
+                .exchange()
+                .expectBody()
+                .json("""
+                        {
+                        "id": 1,
+                        "username": "Bobby"
+                        }
+                        """, JsonCompareMode.STRICT);
     }
 
     @Test
     void failUpdateOnNullUsername() {
         User updatedUser = new User(1L, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/1", HttpMethod.PUT,
-                new HttpEntity<>(updatedUser, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("username: username cannot be null");
+        client.put()
+                .uri("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(updatedUser)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users/1",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void failUpdateOnEmptyUsername() {
         User updatedUser = new User(1L, "");
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/1", HttpMethod.PUT,
-                new HttpEntity<>(updatedUser, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("username: username cannot be empty");
+        client.put()
+                .uri("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(updatedUser)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users/1",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void failUpdateOnBlankUsername() {
         User updatedUser = new User(1L, "   ");
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/1", HttpMethod.PUT,
-                new HttpEntity<>(updatedUser, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("username: username cannot be blank");
+        client.put()
+                .uri("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(updatedUser)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/users/1",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // deleteUser
     @Test
     void successfulDeleteUserWithNoLineups() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/4", HttpMethod.DELETE, null,
-                String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        client.delete()
+                .uri("/api/users/4")
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
     }
 
     // When a user gets deleted the lineups created by the user will also get
@@ -233,45 +320,58 @@ public class UserIntegrationTest {
     @Test
     void successfulDeleteUserWithLineups() {
         // confirm that the user does have lineups
-        ResponseEntity<String> userToDeletesLineups = restTemplate.exchange("/api/lineups/user/2",
-                HttpMethod.GET, null, String.class);
+        List<LineupWithAuthorDTO> lineups = getOkBody("/api/lineups/user/2",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                });
 
-        assertThat(userToDeletesLineups.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userToDeletesLineups.getBody()).isNotEmpty();
+        assertThat(lineups).isNotEmpty();
+        assertThat(lineups).extracting(LineupWithAuthorDTO::id)
+                .contains(2L, 3L);
 
         // delete the user
-        var deleteUserResponse = restTemplate.exchange("/api/users/2", HttpMethod.DELETE, null,
-                String.class);
-
-        assertThat(deleteUserResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        client.delete()
+                .uri("/api/users/2")
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
 
         // confirm that the user has been deleted
-        var requestDeletedUser = restTemplate.exchange("/api/user/2", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(requestDeletedUser.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        client.get()
+                .uri("/api/users/2")
+                .exchange()
+                .expectStatus().isNotFound();
 
         // confirm that the lineups also have been deleted
-        var requestFirstLineup = restTemplate.exchange("/api/lineups/2", HttpMethod.GET, null,
-                String.class);
+        client.get()
+                .uri("/api/lineups/2")
+                .exchange()
+                .expectStatus().isNotFound();
 
-        var requestSecondLineup = restTemplate.exchange("/api/lineups/3", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(requestFirstLineup.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(requestSecondLineup.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        client.get()
+                .uri("/api/lineups/3")
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
     void failDeleteOnNonexistentId() {
         // we'd expect to receive a 404 w/msg "no user associated with id XZY"-esq
         // for reference, userId: 2 has lineups (ids) 2 and 3.
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/222", HttpMethod.DELETE,
-                null, String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(res.getBody()).contains("User not found");
-        assertThat(res.getBody()).contains("User with id: '222' was not found");
+        client.delete()
+                .uri("/api/users/222")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 404,
+                          "title": "User not found",
+                          "code": "USER_NOT_FOUND",
+                          "instance": "/api/users/222",
+                          "detail": "User with id: '222' was not found",
+                          "type": "https://lineup-larry.dev/problems/users/not-found"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // unsuccessful delete TODO: once auth has been impl
@@ -279,8 +379,8 @@ public class UserIntegrationTest {
     // getUserSummary
     @Test
     void successfulGetUserSummary() {
-        ResponseEntity<UserSummaryDTO> res = restTemplate.exchange("/api/users/summary/3",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+        var response = getOkBody("/api/users/summary/3",
+                new ParameterizedTypeReference<UserSummaryDTO>() {
                 });
 
         // expeceted resutls:
@@ -298,33 +398,41 @@ public class UserIntegrationTest {
                 new LineupIdTitleDTO(20L, "titleFour"), new LineupIdTitleDTO(9L, "teleport thingy"),
                 new LineupIdTitleDTO(15L, "titleFour"), new LineupIdTitleDTO(22L, "titleFour"));
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody().userId()).isEqualTo(3);
-        assertThat(res.getBody().recentLineups()).isEqualTo(recentlyCreatedLineups);
-        assertThat(res.getBody().mostLikedLineups()).isEqualTo(mostLikedLineups);
-        assertThat(res.getBody().recentlyLikedLineups()).isEqualTo(recentlyLikedLineups);
+        assertThat(response.mostLikedLineups()).isEqualTo(mostLikedLineups);
+        assertThat(response.recentLineups()).isEqualTo(recentlyCreatedLineups);
+        assertThat(response.recentlyLikedLineups()).isEqualTo(recentlyLikedLineups);
+
     }
 
     @Test
     void getUserSummaryOnUserWithNoData() {
-        ResponseEntity<UserSummaryDTO> res = restTemplate.exchange("/api/users/summary/5",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+        var response = getOkBody("/api/users/summary/5",
+                new ParameterizedTypeReference<UserSummaryDTO>() {
                 });
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().username()).isEqualTo("userFive");
-        assertThat(res.getBody().userId()).isEqualTo(5);
-        assertThat(res.getBody().recentLineups()).isEmpty();
-        assertThat(res.getBody().mostLikedLineups()).isEmpty();
-        assertThat(res.getBody().recentlyLikedLineups()).isEmpty();
+        assertThat(response.userId()).isEqualTo(5);
+        assertThat(response.username()).isEqualTo("userFive");
+        assertThat(response.recentLineups()).isEmpty();
+        assertThat(response.mostLikedLineups()).isEmpty();
+        assertThat(response.recentlyLikedLineups()).isEmpty();
     }
 
     @Test
     void getUserSummaryOnNonexistentUser() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/users/summary/999", HttpMethod.GET,
-                null, String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        client.get()
+                .uri("/api/users/summary/999")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .json("""
+                        {
+                          "status": 404,
+                          "title": "User not found",
+                          "code": "USER_NOT_FOUND",
+                          "instance": "/api/users/summary/999",
+                          "detail": "User with id: '999' was not found",
+                          "type": "https://lineup-larry.dev/problems/users/not-found"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 }
