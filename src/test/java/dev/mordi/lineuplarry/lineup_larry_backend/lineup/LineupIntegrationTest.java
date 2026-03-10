@@ -1,61 +1,37 @@
 package dev.mordi.lineuplarry.lineup_larry_backend.lineup;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.json.JsonCompareMode;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Agent;
 import dev.mordi.lineuplarry.lineup_larry_backend.enums.Map;
+import dev.mordi.lineuplarry.lineup_larry_backend.shared.RestIntegrationTestSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-// TODO: Swap TestRestTemplate for RestTestClient
-// https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide#using-webclient-or-testresttemplate-and-springboottest
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("/test-data.sql")
 @Testcontainers
-@AutoConfigureMockMvc
-@AutoConfigureTestRestTemplate
-public class LineupIntegrationTest {
-
-    // opting for TestRestTemplate for now, might swap to RestClient once stable
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    private static HttpHeaders headers;
+@AutoConfigureRestTestClient
+public class LineupIntegrationTest extends RestIntegrationTestSupport {
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
-    @BeforeAll
-    static void initHeader() {
-        headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-    }
-
     @Test
     void successfulGetAll() {
-        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange("/api/lineups",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                });
-
         List<LineupWithAuthorDTO> expectedArray = List.of(
                 new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L,
                         null, null, "userOne"),
@@ -98,20 +74,30 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(20L, Agent.FADE, Map.LOTUS, "titleFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(expectedArray.size());
-        assertThat(res.getBody().stream().toList()).usingRecursiveComparison()
+        var response = client.get()
+                .uri("/api/lineups")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(response).usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedArray);
     }
 
     @Test
     void successfulSearchByTitleWithMatches() {
-        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange(
-                "/api/lineups?title=same+name", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
-                });
+        var response = client.get()
+                .uri("/api/lineups?title=same+name")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
         List<LineupWithAuthorDTO> expectedArray = List.of(
                 new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
@@ -119,11 +105,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(2);
-        assertThat(res.getBody().stream().toList())
-                .usingRecursiveComparison()
+        assertThat(response).usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedArray);
     }
@@ -131,38 +113,62 @@ public class LineupIntegrationTest {
     // Reconsider if this is even a good practice
     @Test
     void failGetByTitleOnBlankSearchTitle() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?title=    ",
-                HttpMethod.GET, null, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("Invalid search title");
-        assertThat(response.getBody()).contains("Lineup title cannot be blank");
+        client.get()
+                .uri("/api/lineups?title=    ")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid search title",
+                        "code": "LINEUP_TITLE_BLANK",
+                        "detail": "Lineup title cannot be blank",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/lineups/title-blank"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
+    // TODO: Reconsider this validation
     @Test
     void failGetByTitleOnEmptySearchTitle() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?title=",
-                HttpMethod.GET, null, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("REQUEST_CONSTRAINT_VIOLATION");
-        assertThat(response.getBody()).contains("Title must be between 3 and 40 characters");
+        client.get()
+                .uri("/api/lineups?title=")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody() // TODO: fix war crime
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Bad Request",
+                        "code": "REQUEST_CONSTRAINT_VIOLATION",
+                        "detail": "getLineups.title: Title must be between 3 and 40 characters",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/validation/constraint-violation"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // getByID
     @Test
     void successfulGetById() {
-        ResponseEntity<Optional<LineupWithAuthorDTO>> res = restTemplate.exchange("/api/lineups/1",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                });
-
         LineupWithAuthorDTO expectedLineup = new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT,
                 "lineupOne", "bodyOne", 1L, null, null, "userOne");
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody()).isPresent();
-        assertThat(res.getBody().get())
+        LineupWithAuthorDTO response = client.get()
+                .uri("/api/lineups/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(new ParameterizedTypeReference<LineupWithAuthorDTO>() {
+                })
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineup);
@@ -170,20 +176,26 @@ public class LineupIntegrationTest {
 
     @Test
     void failToGetByIdOnNonexistentId() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/999", HttpMethod.GET, null,
-                String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(res.getBody()).contains("Lineup not found");
-        assertThat(res.getBody()).contains("LINEUP_NOT_FOUND");
+        client.get()
+                .uri("/api/lineups/999")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 404,
+                        "title": "Lineup not found",
+                        "code": "LINEUP_NOT_FOUND",
+                        "detail": "No lineup with id: '999' exists",
+                        "instance": "/api/lineups/999",
+                        "type": "https://lineup-larry.dev/problems/lineups/not-found"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void successfulGetAllLineupsFromUser() {
-        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange("/api/lineups/user/2",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                });
-
         // user 2 has lineups, 2 and 3:
         List<LineupWithAuthorDTO> expectedLineups = List.of(
                 new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L,
@@ -193,10 +205,16 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(9L, Agent.YORU, Map.HAVEN, "teleport thingy",
                         "good for post plant", 2L, null, null, "userTwo"));
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().size()).isEqualTo(expectedLineups.size());
-        assertThat(res.getBody().stream().toList())
+        var response = client.get()
+                .uri("/api/lineups/user/2")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineups);
@@ -205,23 +223,37 @@ public class LineupIntegrationTest {
     @Test
     void successfulGetAllLineupsFromUserWithoutLineups() {
         // in test-data.sql user 4 and 5 have no lineups
-        ResponseEntity<List<LineupWithAuthorDTO>> res = restTemplate.exchange("/api/lineups/user/4",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                });
+        var response = client.get()
+                .uri("/api/lineups/user/4")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isEmpty();
+        assertThat(response).isEmpty();
     }
 
+    // TODO: rethink error code and the type
     @Test
     void failGetAlLineupsFromUserWithInvalidUserId() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/user/999", HttpMethod.GET,
-                null, new ParameterizedTypeReference<>() {
-                });
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(res.getBody()).contains("User not found");
-        assertThat(res.getBody()).contains("No user with id: '999' exists");
+        client.get()
+                .uri("/api/lineups/user/999")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 404,
+                        "title": "User not found",
+                        "code": "LINEUP_USER_NOT_FOUND",
+                        "detail": "No user with id: '999' exists",
+                        "instance": "/api/lineups/user/999",
+                        "type": "https://lineup-larry.dev/problems/lineups/user-not-found"
+                        }
+                              """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -229,18 +261,20 @@ public class LineupIntegrationTest {
         Lineup lineupToCreate = new Lineup(null, Agent.SOVA, Map.ASCENT, "lineup to create",
                 "body to create", 2L, null, null);
 
-        ResponseEntity<Lineup> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupToCreate, headers), Lineup.class);
+        var response = client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupToCreate)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<Lineup>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().id()).isNotNull();
-        // sequence has been set to start of at 101, to give headroom for seed data,
-        // only applies to
-        // "dev"-env
-        assertThat(res.getBody().id()).isEqualTo(101);
-        assertThat(res.getBody().createdAt()).isNotNull();
-        assertThat(res.getBody().updatedAt()).isNotNull();
+        assertThat(response.id()).isEqualTo(101);
+        assertThat(response.createdAt()).isNotNull();
+        assertThat(response.updatedAt()).isNotNull();
     }
 
     @Test
@@ -249,40 +283,66 @@ public class LineupIntegrationTest {
                 {"title":"lineup to create","body":"body to create","agent":"SOVA","map":"ICEBOX","userId":2}\
                 """;
 
-        ResponseEntity<Lineup> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithoutIdJsonTemplate, headers), Lineup.class);
+        var respone = client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithoutIdJsonTemplate)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<Lineup>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().id()).isEqualTo(101);
+        assertThat(respone.id()).isEqualTo(101);
     }
 
+    // TODO: reconsider this test
     @Test
     void createLineupWithUserIdAsString() {
         String lineupWithUserIdAsStringJsonTemplate = """
                 {"title":"lineup to create","body":"body to create","agent":"SOVA","map":"ICEBOX","userId":"2"}\
                 """;
 
-        ResponseEntity<Lineup> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithUserIdAsStringJsonTemplate, headers), Lineup.class);
+        var response = client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithUserIdAsStringJsonTemplate)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<Lineup>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody().id()).isEqualTo(101);
+        assertThat(response.id()).isEqualTo(101);
     }
 
+    // TODO: fix the details random order, this is an issue on all fail, on create
+    // lineup test
     @Test
     void failCreateOnNullTitle() {
         String lineupWithNullTitleJsonTemplate = """
                 {"title": null,"body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithNullTitleJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be blank");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithNullTitleJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                          "status": 400,
+                          "title": "Invalid data",
+                          "code": "REQUEST_INVALID_BODY",
+                          "instance": "/api/lineups",
+                          "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -291,12 +351,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","agent":"SOVA","map":"ASCENT","body":null,"userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithNullBodyJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be blank");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithNullBodyJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -305,12 +376,23 @@ public class LineupIntegrationTest {
                 {"title": "  ","body":"valid body","agent":"SOVA","map":"ASCENT","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithBlankTitleJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be blank");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithBlankTitleJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                            """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -319,12 +401,25 @@ public class LineupIntegrationTest {
                 {"title":"valid title","body":"valid body","map":"ASCENT","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithNullAgentJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("agent: agent cannot be null");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithNullAgentJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT)
+                .returnResult()
+                .getResponseBody();
     }
 
     @Test
@@ -333,12 +428,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","body":"valid body","agent":"invalidAgent","map":"ASCENT","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithInvalidAgentJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid agent");
-        assertThat(res.getBody()).contains("The agent: 'invalidAgent' is not a valid agent");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithInvalidAgentJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid agent",
+                        "code": "LINEUP_INVALID_AGENT",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-agent"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -347,12 +453,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","body":"valid body","agent":"SOVA","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithNullMapJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("map: map cannot be null");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithNullMapJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -361,12 +478,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","body":"valid body","agent":"SOVA","map":"invalidMap","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithInvalidMapJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid map");
-        assertThat(res.getBody()).contains("The map: 'invalidMap' is not a valid map");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithInvalidMapJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid map",
+                        "code": "LINEUP_INVALID_MAP",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-map"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -375,12 +503,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"  ","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithBlankBodyJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be blank");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithBlankBodyJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                            """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -389,12 +528,23 @@ public class LineupIntegrationTest {
                 {"title": "","agent":"SOVA","map":"ASCENT","body":"valid body","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithEmptyTitleJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be empty");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithEmptyTitleJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -403,12 +553,23 @@ public class LineupIntegrationTest {
                 {"title":"valid title","agent":"SOVA","map":"ASCENT","body":"","userId":2}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.postForEntity("/api/lineups",
-                new HttpEntity<>(lineupWithEmptyBodyJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be empty");
+        client.post()
+                .uri("/api/lineups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithEmptyBodyJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -416,21 +577,24 @@ public class LineupIntegrationTest {
         Lineup updatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title",
                 "updated body", 1L, null, null);
 
-        ResponseEntity<Optional<LineupWithAuthorDTO>> res = restTemplate.exchange("/api/lineups/1",
-                HttpMethod.PUT, new HttpEntity<>(updatedLineup, headers),
-                new ParameterizedTypeReference<>() {
-                });
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(updatedLineup)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().isEmpty();
 
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res.getBody()).isNull();
+        LineupWithAuthorDTO response = client.get()
+                .uri("/api/lineups/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<LineupWithAuthorDTO>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
-        ResponseEntity<Optional<LineupWithAuthorDTO>> res2 = restTemplate.exchange("/api/lineups/1",
-                HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                });
-
-        assertThat(res2.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(res2.getBody()).isPresent();
-        assertThat(res2.getBody().get())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("authorUsername", "createdAt", "updatedAt")
                 .isEqualTo(updatedLineup);
@@ -441,12 +605,24 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(null, Agent.SOVA, Map.ASCENT, "updated title",
                 "updated body", 1L, null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Lineup id's cannot be altered");
-        assertThat(res.getBody()).contains("Cannot change lineup id from: '1' to: 'null'");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Lineup id's cannot be altered",
+                        "code": "LINEUP_ID_MISMATCH",
+                        "detail": "Cannot change lineup id from: '1' to: 'null'",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/lineups/id-mismatch"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -454,12 +630,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, null, "updated body", 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be null");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -467,12 +654,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", null, 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be null");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -480,12 +678,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "  ", "updated body", 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be blank");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -493,12 +702,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "  ", 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be blank");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -506,12 +726,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "", "updated body", 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("title: title cannot be empty");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -519,12 +750,23 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(1L, Agent.SOVA, Map.ASCENT, "updated title", "", 1L,
                 null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid data");
-        assertThat(res.getBody()).contains("body: body cannot be empty");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid data",
+                        "code": "REQUEST_INVALID_BODY",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/request/invalid-body"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -533,12 +775,23 @@ public class LineupIntegrationTest {
                 {"id":1,"title":"valid title","body":"valid body","agent":"INVALIDAGENT","map":"ASCENT","userId":1}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(lineupWithInvalidAgentJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid agent");
-        assertThat(res.getBody()).contains("The agent: 'INVALIDAGENT' is not a valid agent");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithInvalidAgentJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid agent",
+                        "code": "LINEUP_INVALID_AGENT",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-agent"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
@@ -547,12 +800,23 @@ public class LineupIntegrationTest {
                 {"id":1,"title":"valid title","body":"valid body","agent":"BREACH","map":"INVALIDMAP","userId":1}\
                 """;
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(lineupWithInvalidMapJsonTemplate, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Invalid map");
-        assertThat(res.getBody()).contains("The map: 'INVALIDMAP' is not a valid map");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(lineupWithInvalidMapJsonTemplate)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid map",
+                        "code": "LINEUP_INVALID_MAP",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-map"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // fail to update due to changed lineupId
@@ -563,12 +827,24 @@ public class LineupIntegrationTest {
         Lineup badUpdatedLineup = new Lineup(33L, Agent.SOVA, Map.ASCENT, "updated title",
                 "updated body", 1L, null, null);
 
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/1", HttpMethod.PUT,
-                new HttpEntity<>(badUpdatedLineup, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(res.getBody()).contains("Lineup id's cannot be altered");
-        assertThat(res.getBody()).contains("Cannot change lineup id from: '1' to: '33'");
+        client.put()
+                .uri("/api/lineups/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(badUpdatedLineup)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Lineup id's cannot be altered",
+                        "code": "LINEUP_ID_MISMATCH",
+                        "detail": "Cannot change lineup id from: '1' to: '33'",
+                        "instance": "/api/lineups/1",
+                        "type": "https://lineup-larry.dev/problems/lineups/id-mismatch"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // fail to update due to userId not matching user principal (TODO: after auth)
@@ -577,21 +853,31 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulDelete() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/2", HttpMethod.DELETE,
-                new HttpEntity<>(null, headers), String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        assertThat(res.getBody()).isNull();
+        client.delete()
+                .uri("/api/lineups/2")
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
     }
 
     @Test
     void deleteOnNonexistentLineup() {
-        ResponseEntity<String> res = restTemplate.exchange("/api/lineups/999", HttpMethod.DELETE,
-                null, String.class);
-
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(res.getBody()).isNotNull();
-        assertThat(res.getBody()).contains("No lineup with id: '999' exists");
+        client.delete()
+                .uri("/api/lineups/999")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 404,
+                        "title": "Lineup not found",
+                        "code": "LINEUP_NOT_FOUND",
+                        "detail": "No lineup with id: '999' exists",
+                        "instance": "/api/lineups/999",
+                        "type": "https://lineup-larry.dev/problems/lineups/not-found"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     // unsuccessfully delete TODO: once auth has been impl
@@ -600,10 +886,14 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSovaLineups() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=sova", HttpMethod.GET, new HttpEntity<>(null, headers),
-                new ParameterizedTypeReference<>() {
-                });
+        List<LineupWithAuthorDTO> response = client.get()
+                .uri("/api/lineups?agent=sova")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                })
+                .returnResult()
+                .getResponseBody();
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
                 new LineupWithAuthorDTO(1L, Agent.SOVA, Map.ASCENT, "lineupOne", "bodyOne", 1L,
@@ -611,27 +901,37 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L,
                         null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt").isEqualTo(expectedResult);
     }
 
+    // TODO: consider if the searchparams should be a part of the error message
     @Test
     void failGetAllLineupsOnInvalidAgent() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?agent=notARealAgent",
-                HttpMethod.GET, null, String.class);
+        client.get()
+                .uri("/api/lineups?agent=notARealAgent")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid agent",
+                        "code": "LINEUP_INVALID_AGENT",
+                        "detail": "The agent: 'notARealAgent' is not a valid agent",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-agent"
+                        }
+                        """, JsonCompareMode.LENIENT);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("The agent: 'notARealAgent' is not a valid agent");
     }
 
     @Test
     void getAllSunsetLineups() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=sunset", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=sunset",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
@@ -640,9 +940,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(13L, Agent.OMEN, Map.SUNSET, "titleFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedResult);
@@ -650,74 +948,74 @@ public class LineupIntegrationTest {
 
     @Test
     void failGetAllLineupsFromAnInvalidMap() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?map=thisIsNotAMap",
-                HttpMethod.GET, null, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("The map: 'thisIsNotAMap' is not a valid map");
+        client.get()
+                .uri("/api/lineups?map=thisIsNotAMap")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .json("""
+                        {
+                        "status": 400,
+                        "title": "Invalid map",
+                        "code": "LINEUP_INVALID_MAP",
+                        "detail": "The map: 'thisIsNotAMap' is not a valid map",
+                        "instance": "/api/lineups",
+                        "type": "https://lineup-larry.dev/problems/lineups/invalid-map"
+                        }
+                        """, JsonCompareMode.LENIENT);
     }
 
     @Test
     void getAllLineupsFromMapThatDoesNotHaveAnyLineups() {
-        // 10/10 naming yerp
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?map=pearl",
-                HttpMethod.GET, null, String.class);
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=pearl",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                });
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("""
-                []\
-                """); // empty list
+        assertThat(response).isEmpty();
     }
 
     @Test
     void getAllLineupsFromAgentWithoutLineups() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?agent=reyna",
-                HttpMethod.GET, null, String.class);
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=reyna",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                });
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("""
-                []\
-                """); // empty list
+        assertThat(response).isEmpty();
     }
 
     @Test
     void getAllLineupsFromAgentAndMapWithNoMatches() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups?map=pearl&agent=jett",
-                HttpMethod.GET, null, String.class);
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=pearl&agent=jett",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
+                });
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("""
-                []\
-                """); // empty list
+        assertThat(response).isEmpty();
     }
 
+    // TODO: get both errors, figure it out
     // in the event both agent and map are invalid the agent should err first
     @Test
     void getAllLineupsOnInvalidAgentAndMap() {
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups?agent=NotJett&map=notAscent", HttpMethod.GET, null, String.class);
+        String response = getBody("/api/lineups?agent=NotJett&map=notAscent",
+                HttpStatus.BAD_REQUEST);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("The agent: 'NotJett' is not a valid agent");
+        assertThat(response).contains("The agent: 'NotJett' is not a valid agent");
     }
 
     @Test
     void getAllLineupsFromAgentMapAndTitleWithNoMatches() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=pearl&agent=jett&title=nope", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=pearl&agent=jett&title=nope",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEqualTo(Collections.EMPTY_LIST);
+        assertThat(response).isEmpty();
     }
 
     @Test
     void getAllSovaLineupsOnAscent() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=sova&map=ascent", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=sova&map=ascent",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedLineups = List.of(
@@ -726,9 +1024,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L,
                         null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineups);
@@ -736,17 +1032,14 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllAscentMapsWithSpecificTitle() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent&title=lineupTwo", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=ascent&title=lineupTwo",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedResult = List.of(new LineupWithAuthorDTO(2L, Agent.SOVA,
                 Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedResult);
@@ -754,35 +1047,31 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllSovaLineupsWithSpecificTitle() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=sova&title=lineupTwo", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=sova&title=lineupTwo",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
-        List<LineupWithAuthorDTO> expectedList = Collections.singletonList(new LineupWithAuthorDTO(
-                2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
+        List<LineupWithAuthorDTO> expectedList = List.of(new LineupWithAuthorDTO(2L, Agent.SOVA,
+                Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
     }
 
+    // TODO: are all of these test really needed?
     @Test
     void getAllLineupByAgentMapAndTitle() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=brimstone&map=bind&title=lineupThree", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?agent=brimstone&map=bind&title=lineupThree",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedLineup = List.of(new LineupWithAuthorDTO(3L,
                 Agent.BRIMSTONE, Map.BIND, "lineupThree", "bodyThree", 2L, null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineup);
@@ -790,40 +1079,34 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupByAgentMapAndTitleInvalidAgent() {
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/api/lineups?agent=brimmystonero&map=bind&title=lineupThree", HttpMethod.GET, null,
-                String.class);
+        String response = getBody("/api/lineups?agent=brimmystonero&map=bind&title=lineupThree",
+                HttpStatus.BAD_REQUEST);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("The agent: 'brimmystonero' is not a valid agent");
+        assertThat(response).contains("The agent: 'brimmystonero' is not a valid agent");
     }
 
     @Test
     void getAllLineupByAgentMapAndTitleInvalidMap() {
-        ResponseEntity<String> response = restTemplate.exchange(
+        String response = getBody(
                 "/api/lineups?agent=brimstone&map=bindersToBeBinding&title=lineupThree",
-                HttpMethod.GET, null, String.class);
+                HttpStatus.BAD_REQUEST);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("The map: 'bindersToBeBinding' is not a valid map");
+        assertThat(response).contains("The map: 'bindersToBeBinding' is not a valid map");
     }
 
     // getByTitlePagination
     // expect to get just the first lineup
     @Test
     void successfulGetByTitlePaginationSmallPageSize() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?title=same+name&pageSize=1", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?title=same+name&pageSize=1",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
-        List<LineupWithAuthorDTO> expectedResult = Collections
-                .singletonList(new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name",
-                        "bodyFour", 3L, null, null, "userThree"));
+        List<LineupWithAuthorDTO> expectedResult = List.of(new LineupWithAuthorDTO(5L,
+                Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null,
+                "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedResult);
@@ -833,9 +1116,8 @@ public class LineupIntegrationTest {
     // TODO: standardize these betters
     @Test
     void successfulGetByTitlePagination() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?title=same+name&pageSize=3", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?title=same+name&pageSize=3",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedResult = List.of(
@@ -844,9 +1126,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedResult);
@@ -855,18 +1135,16 @@ public class LineupIntegrationTest {
     // expect to get the last same name lineup
     @Test
     void successfulGetByTitlePaginationSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?title=same+name&pageSize=1&lastValue=5", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?title=same+name&pageSize=1&lastValue=5",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
-        List<LineupWithAuthorDTO> expectedResult = Collections
-                .singletonList(new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name",
-                        "bodyFour", 3L, null, null, "userThree"));
+        List<LineupWithAuthorDTO> expectedResult = List.of(new LineupWithAuthorDTO(6L,
+                Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null,
+                "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedResult);
@@ -875,9 +1153,8 @@ public class LineupIntegrationTest {
     // findByAgentPaginated
     @Test
     void successfulFindByAgentPagination() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=sova", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=sova",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -886,9 +1163,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L,
                         null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -896,17 +1171,14 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByAgentPaginationSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=sova&pageSize=1&lastValue=1", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=sova&pageSize=1&lastValue=1",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(new LineupWithAuthorDTO(2L, Agent.SOVA,
                 Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -915,9 +1187,8 @@ public class LineupIntegrationTest {
     // findByMapPaginated
     @Test
     void successfulFindByMapPagination() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=ascent",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -928,9 +1199,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -938,9 +1207,8 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByMapPaginationSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent&lastValue=1", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=ascent&lastValue=1",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -949,9 +1217,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -960,9 +1226,8 @@ public class LineupIntegrationTest {
     // findByAgentAndMapPaginated
     @Test
     void successfulFindByAgentAntMapPagination() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=ascent",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -973,9 +1238,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(18L, Agent.KAYO, Map.ASCENT, "titleFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -983,17 +1246,15 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByAgentAndMapPaginationSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=ascent&agent=sova&lastValue=1", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?map=ascent&agent=sova&lastValue=1",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(new LineupWithAuthorDTO(2L, Agent.SOVA,
                 Map.ASCENT, "lineupTwo", "bodyTwo", 2L, null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1002,9 +1263,8 @@ public class LineupIntegrationTest {
     // findByMapAndTitlePaginated
     @Test
     void successfulFindByMapAndTitlePaginated() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=icebox&title=same+name", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?map=icebox&title=same+name",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1013,9 +1273,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1023,17 +1281,15 @@ public class LineupIntegrationTest {
 
     @Test
     void successfulFindByMapAndTitlePaginatedSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=icebox&title=same+name&lastValue=5", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?map=icebox&title=same+name&lastValue=5",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(new LineupWithAuthorDTO(6L, Agent.KILLJOY,
                 Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1042,9 +1298,8 @@ public class LineupIntegrationTest {
     // findByAgentAndTitlePaginated
     @Test
     void findByAgentAndTitlePaginated() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=killjoy&title=same+name", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?agent=killjoy&title=same+name",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1053,9 +1308,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1063,17 +1316,15 @@ public class LineupIntegrationTest {
 
     @Test
     void findByAgentAndTitlePaginatedSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=killjoy&title=same+name&lastValue=5", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?agent=killjoy&title=same+name&lastValue=5",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(new LineupWithAuthorDTO(6L, Agent.KILLJOY,
                 Map.ICEBOX, "same name", "bodyFour", 3L, null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1082,9 +1333,9 @@ public class LineupIntegrationTest {
     // findByAgentAndMapAndTitlePaginated
     @Test
     void findByAgentAndMapAndTitlePaginated() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?agent=killjoy&map=icebox&title=same+name", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?agent=killjoy&map=icebox&title=same+name",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedLineup = List.of(
@@ -1093,9 +1344,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineup);
@@ -1103,17 +1352,16 @@ public class LineupIntegrationTest {
 
     @Test
     void findByAgentAndMapAndTitlePaginatedSeek() {
-        ResponseEntity<List<Lineup>> response = restTemplate.exchange(
-                "/api/lineups?agent=killjoy&map=icebox&title=same+name&lastValue=5", HttpMethod.GET,
-                null, new ParameterizedTypeReference<List<Lineup>>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?agent=killjoy&map=icebox&title=same+name&lastValue=5",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
-        List<Lineup> expectedLineup = List.of(
-                new Lineup(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null));
+        List<LineupWithAuthorDTO> expectedLineup = List.of(new LineupWithAuthorDTO(6L,
+                Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L, null, null,
+                "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedLineup);
@@ -1122,9 +1370,8 @@ public class LineupIntegrationTest {
     // getAllLineupsPaginated
     @Test
     void getAllLineupsPaginated() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?pageSize=2", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?pageSize=2",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1133,9 +1380,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(2L, Agent.SOVA, Map.ASCENT, "lineupTwo", "bodyTwo", 2L,
                         null, null, "userTwo"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1143,9 +1388,8 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupsPaginatedSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?pageSize=2&lastValue=2", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups?pageSize=2&lastValue=2",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1154,9 +1398,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(4L, Agent.CYPHER, Map.SUNSET, "lineupFour", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1165,9 +1407,8 @@ public class LineupIntegrationTest {
     // getByAuthor
     @Test
     void getAllLineupsFromAuthorPageSized() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups/user/3?pageSize=2", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups/user/3?pageSize=2",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1176,9 +1417,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(5L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1186,9 +1425,8 @@ public class LineupIntegrationTest {
 
     @Test
     void getAllLineupsFromAuthorPageSizedSeek() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups/user/3?pageSize=2&lastValue=4", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody("/api/lineups/user/3?pageSize=2&lastValue=4",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
 
         List<LineupWithAuthorDTO> expectedList = List.of(
@@ -1197,9 +1435,7 @@ public class LineupIntegrationTest {
                 new LineupWithAuthorDTO(6L, Agent.KILLJOY, Map.ICEBOX, "same name", "bodyFour", 3L,
                         null, null, "userThree"));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody())
+        assertThat(response)
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt", "updatedAt")
                 .isEqualTo(expectedList);
@@ -1207,38 +1443,32 @@ public class LineupIntegrationTest {
 
     @Test
     void GetAllLineupsFromNonexistentUser() {
-        ResponseEntity<String> response = restTemplate.exchange("/api/lineups/user/999?pageSize=10",
-                HttpMethod.GET, null, String.class);
+        String response = getBody("/api/lineups/user/999?pageSize=10", HttpStatus.NOT_FOUND);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).contains("No user with id: '999' exists");
+        assertThat(response).isNotEmpty();
+        assertThat(response).contains("No user with id: '999' exists");
     }
 
     @Test
     void getAllLineupsFromNonexistentUserPaginated() {
-        ResponseEntity<String> response = restTemplate
-                .exchange("/api/lineups/user/999?lastValue=72", HttpMethod.GET, null, String.class);
+        String response = getBody("/api/lineups/user/999?lastValue=72", HttpStatus.NOT_FOUND);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).contains("No user with id: '999' exists");
+        assertThat(response).isNotEmpty();
+        assertThat(response).contains("No user with id: '999' exists");
     }
 
     // seeking on "bad" values, ie does not exist or the seek value does not fit the
     // query criteria
     @Test
     void failPaginationOnNonexistentLineup() {
-        ResponseEntity<List<LineupWithAuthorDTO>> response = restTemplate.exchange(
-                "/api/lineups?map=pearl&agent=vyse&lastValue=999", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+        List<LineupWithAuthorDTO> response = getOkBody(
+                "/api/lineups?map=pearl&agent=vyse&lastValue=999",
+                new ParameterizedTypeReference<List<LineupWithAuthorDTO>>() {
                 });
         // JOOQ does not throw an error, it just returns an empty list, which we'll deem
         // as fine and
         // return it as well
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().stream().toList()).isEmpty();
+        assertThat(response).isEmpty();
     }
 }
